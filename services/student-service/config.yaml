@@ -1,0 +1,31 @@
+server:
+  host: "0.0.0.0"
+  port: 8082
+  grpc_port: 50052
+  read_timeout: 15s
+  write_timeout: 15s
+  idle_timeout: 60s
+
+database:
+  host: "postgres"
+  port: 5432
+  user: "glohib"
+  password: "changeme"
+  database: "glohib_db"
+  ssl_mode: "disable"
+  max_conns: 25
+  min_conns: 5
+
+redis:
+  host: "redis"
+  port: 6379
+  db: 0
+  pool_size: 10
+
+logging:
+  level: "info"
+  format: "json"
+
+services:
+  embedding_service_url: "http://ai-service:8000"
+  auth_service_url: "http://identity-service:8080"

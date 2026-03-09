@@ -1,0 +1,168 @@
+-- Glohib.ai - Sample Data Seed Script
+-- Run this after migrations to populate test data
+
+-- Enable extensions
+\c glohib_db
+
+-- Sample Users (password: "password123" hashed)
+-- Password hash generated with: bcrypt.hashpw('password123', bcrypt.gen_salt(10))
+INSERT INTO users (id, email, password_hash, roles, provider, created_at, updated_at)
+VALUES 
+    ('00000000-0000-0000-0000-000000000001', 'student@example.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', '{student}', 'local', NOW(), NOW()),
+    ('00000000-0000-0000-0000-000000000002', 'employer@example.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', '{employer}', 'local', NOW(), NOW()),
+    ('00000000-0000-0000-0000-000000000003', 'mentor@example.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', '{mentor}', 'local', NOW(), NOW())
+ON CONFLICT (email) DO NOTHING;
+
+-- Sample Students
+INSERT INTO students (id, user_id, first_name, last_name, email, bio, city, country, is_active, profile_complete, created_at, updated_at)
+VALUES 
+    (
+        '10000000-0000-0000-0000-000000000001',
+        '00000000-0000-0000-0000-000000000001',
+        'John',
+        'Doe',
+        'student@example.com',
+        'Computer Science student passionate about AI and machine learning. Looking for internship opportunities to gain practical experience.',
+        'Lagos',
+        'Nigeria',
+        true,
+        75.0,
+        NOW(),
+        NOW()
+    )
+ON CONFLICT DO NOTHING;
+
+-- Sample Employers
+INSERT INTO employers (id, name, tier, api_key, verified_domains, created_at)
+VALUES 
+    (
+        '20000000-0000-0000-0000-000000000001',
+        'TechCorp Africa',
+        'gold',
+        '00000000-0000-0000-0000-000000000001',
+        ARRAY['techcorp.africa'],
+        NOW()
+    ),
+    (
+        '20000000-0000-0000-0000-000000000002',
+        'InnovateLabs',
+        'silver',
+        '00000000-0000-0000-0000-000000000002',
+        ARRAY['innovatelabs.com'],
+        NOW()
+    )
+ON CONFLICT DO NOTHING;
+
+-- Sample Internships
+INSERT INTO internships (id, employer_id, title, description, location, remote, paid, duration, skills, tags, active, created_at, updated_at)
+VALUES 
+    (
+        '30000000-0000-0000-0000-000000000001',
+        '20000000-0000-0000-0000-000000000001',
+        'Software Engineering Intern',
+        'Join our engineering team to build scalable web applications. You will work with React, Node.js, and PostgreSQL.',
+        'Lagos, Nigeria',
+        false,
+        true,
+        '12 weeks',
+        ARRAY['JavaScript', 'React', 'Node.js', 'PostgreSQL'],
+        ARRAY['engineering', 'web-development', 'startup'],
+        true,
+        NOW(),
+        NOW()
+    ),
+    (
+        '30000000-0000-0000-0000-000000000002',
+        '20000000-0000-0000-0000-000000000001',
+        'Data Science Intern',
+        'Work on machine learning models and data analysis projects. Experience with Python and pandas required.',
+        'Remote',
+        true,
+        true,
+        '10 weeks',
+        ARRAY['Python', 'Machine Learning', 'pandas', 'SQL'],
+        ARRAY['data-science', 'ai', 'remote'],
+        true,
+        NOW(),
+        NOW()
+    ),
+    (
+        '30000000-0000-0000-0000-000000000003',
+        '20000000-0000-0000-0000-000000000002',
+        'Frontend Developer Intern',
+        'Build beautiful user interfaces using modern React and TypeScript. Work closely with our design team.',
+        'Nairobi, Kenya',
+        false,
+        true,
+        '8 weeks',
+        ARRAY['React', 'TypeScript', 'CSS', 'Tailwind'],
+        ARRAY['frontend', 'ui', 'design'],
+        true,
+        NOW(),
+        NOW()
+    ),
+    (
+        '30000000-0000-0000-0000-000000000004',
+        '20000000-0000-0000-0000-000000000002',
+        'DevOps Intern',
+        'Learn cloud infrastructure and CI/CD pipelines. Experience with Docker and Kubernetes is a plus.',
+        'Remote',
+        true,
+        false,
+        '12 weeks',
+        ARRAY['Docker', 'Kubernetes', 'AWS', 'CI/CD'],
+        ARRAY['devops', 'cloud', 'infrastructure'],
+        true,
+        NOW(),
+        NOW()
+    )
+ON CONFLICT DO NOTHING;
+
+-- Sample Skills for Student
+INSERT INTO skills (id, student_id, name, proficiency, category, created_at, updated_at)
+VALUES 
+    (
+        '40000000-0000-0000-0000-000000000001',
+        '10000000-0000-0000-0000-000000000001',
+        'JavaScript',
+        4,
+        'Technical',
+        NOW(),
+        NOW()
+    ),
+    (
+        '40000000-0000-0000-0000-000000000002',
+        '10000000-0000-0000-0000-000000000001',
+        'Python',
+        3,
+        'Technical',
+        NOW(),
+        NOW()
+    ),
+    (
+        '40000000-0000-0000-0000-000000000003',
+        '10000000-0000-0000-0000-000000000001',
+        'React',
+        3,
+        'Technical',
+        NOW(),
+        NOW()
+    )
+ON CONFLICT DO NOTHING;
+
+-- Create vector embeddings for sample data (for recommendation service)
+-- Note: In production, these would be generated by the recommendation service
+INSERT INTO student_vectors (student_id, embedding, created_at)
+SELECT 
+    '10000000-0000-0000-0000-000000000001',
+    -- Random 512-dimensional vector for demo (normalized)
+    array_agg(random()::float4 ORDER BY n) AS embedding
+FROM generate_series(1, 512) AS n
+ON CONFLICT (student_id) DO NOTHING;
+
+-- Verify data
+SELECT 'Users created: ' || COUNT(*) FROM users;
+SELECT 'Students created: ' || COUNT(*) FROM students;
+SELECT 'Employers created: ' || COUNT(*) FROM employers;
+SELECT 'Internships created: ' || COUNT(*) FROM internships WHERE active = true;
+SELECT 'Skills created: ' || COUNT(*) FROM skills;

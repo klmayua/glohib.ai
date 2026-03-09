@@ -1,0 +1,95 @@
+syntax = "proto3";
+
+package internship;
+
+option go_package = "github.com/glohib.ai/internship/pkg/proto";
+
+service InternshipService {
+  rpc CreateInternship(CreateInternshipRequest) returns (Internship);
+  rpc GetInternship(GetInternshipRequest) returns (Internship);
+  rpc UpdateInternship(UpdateInternshipRequest) returns (Internship);
+  rpc DeleteInternship(DeleteInternshipRequest) returns (DeleteInternshipResponse);
+  rpc ListInternships(ListInternshipsRequest) returns (ListInternshipsResponse);
+  rpc SearchInternships(SearchInternshipsRequest) returns (SearchInternshipsResponse);
+  rpc RecommendInternships(RecommendInternshipsRequest) returns (SearchInternshipsResponse);
+  rpc CreateApplication(CreateApplicationRequest) returns (Application);
+  rpc ListApplications(ListApplicationsRequest) returns (ListApplicationsResponse);
+  rpc GenerateVector(GenerateVectorRequest) returns (GenerateVectorResponse);
+}
+
+message Internship {
+  string id = 1;
+  string employer_id = 2;
+  string title = 3;
+  string description = 4;
+  string location = 5;
+  bool remote = 6;
+  bool paid = 7;
+  string duration = 8;
+  repeated string skills = 9;
+  repeated string tags = 10;
+  int64 created_at = 11;
+  int64 updated_at = 12;
+  repeated float vector = 13;
+}
+
+message Application {
+  string id = 1;
+  string internship_id = 2;
+  string student_id = 3;
+  string status = 4;
+  int64 applied_at = 5;
+}
+
+message CreateInternshipRequest {
+  string employer_id = 1;
+  string title = 2;
+  string description = 3;
+  string location = 4;
+  bool remote = 5;
+  bool paid = 6;
+  string duration = 7;
+  repeated string skills = 8;
+  repeated string tags = 9;
+}
+
+message GetInternshipRequest { string id = 1; }
+
+message UpdateInternshipRequest {
+  string id = 1;
+  string employer_id = 2;
+  string title = 3;
+  string description = 4;
+  string location = 5;
+  bool remote = 6;
+  bool paid = 7;
+  string duration = 8;
+  repeated string skills = 9;
+  repeated string tags = 10;
+}
+
+message DeleteInternshipRequest { string id = 1; string employer_id = 2; }
+message DeleteInternshipResponse {}
+
+message ListInternshipsRequest { int32 limit = 1; int32 offset = 2; }
+message ListInternshipsResponse { repeated Internship items = 1; }
+
+message SearchInternshipsRequest {
+  string query = 1;
+  repeated string skills = 2;
+  repeated string tags = 3;
+  string location = 6;
+  bool remote = 4;
+  bool paid = 5;
+  int32 limit = 7;
+}
+message SearchInternshipsResponse { repeated Internship items = 1; }
+
+message RecommendInternshipsRequest { string student_id = 1; int32 limit = 2; }
+
+message CreateApplicationRequest { string internship_id = 1; string student_id = 2; }
+message ListApplicationsRequest { string internship_id = 1; }
+message ListApplicationsResponse { repeated Application items = 1; }
+
+message GenerateVectorRequest { string internship_id = 1; }
+message GenerateVectorResponse {}

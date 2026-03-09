@@ -1,0 +1,282 @@
+# KIMI CONTEXT BUNDLE - GLOHIB.AI
+# Prepared by: Qwen (Atomic Build Orchestrator)
+# Date: 2026-02-28
+# Authority: ZERO assumptions - Information Courier Only
+
+================================================================================
+SECTION 1: RAW PITCH DOCUMENT REFERENCE
+================================================================================
+
+File Path: C:\Users\UCHE\my-qwen-project\Glohib\Glohib.ai Pitch (1).pptx.txt
+Classification: Primary Foundation Document
+Authority Weight: HIGH
+
+Full document content has been extracted and structured in:
+C:\Users\UCHE\my-qwen-project\Glohib\extracted_intelligence\pitchdeck_structured.yaml
+
+================================================================================
+SECTION 2: STRUCTURED INTELLIGENCE (YAML SUMMARY)
+================================================================================
+
+See: C:\Users\UCHE\my-qwen-project\Glohib\extracted_intelligence\pitchdeck_structured.yaml
+
+Key extracted categories:
+- product_identity (mission, problem_space, value_proposition, user_segments)
+- system_capabilities (discovery_engine, scoring_engine, screening_pipeline, mentorship_routing, employer_dashboard)
+- ai_layers (personalization, nlp_evaluation, dynamic_test_generation, video_assessment)
+- workflow_stages (7 stages from internship feed to employer handoff)
+- stakeholders (students, employers, mentors, institutions)
+- revenue_model (subscriptions, mentorship, CV_services, success_fees)
+- technical_constraints (latency, verification, scalability, bias_reduction, structured_assessment)
+- short_term_timeline (3-6 months)
+- long_term_vision (mobile, gamified_assessment, skill_gap_mapping, analytics_layer, global_infrastructure)
+- resource_needs (infrastructure_tools, talent_engineering)
+- swot_analysis
+
+================================================================================
+SECTION 3: CLARIFIED PROBLEM STATEMENT (EXTRACTED VERBATIM)
+================================================================================
+
+PRIMARY PROBLEM:
+"The global health internship ecosystem suffers from significant inefficiencies. Global health professionals face limited access to verified, relevant, and personalized opportunities, often encountering static or keyword-based platforms. Concurrently, organizations struggle with lengthy recruitment cycles, unreliable applicant filtering, and a lack of structured, scalable assessment for intern readiness."
+
+SPECIFIC PAIN POINTS:
+1. 75% of CVs rejected before reaching human reviewers
+2. Lack of verified global health internships
+3. No centralized platform for AI matching + mentorship
+4. Hiring cycles in health fields exceed 44 days
+5. Students lack actionable career guidance
+
+TECHNICAL CHALLENGES IDENTIFIED:
+1. Intelligent Discovery & Feed Generation: Moving beyond static listings to dynamic, personalized matching
+2. AI-Powered Application Scoring Engine: Building automated, objective, scalable evaluation
+3. Adaptive Multi-Stage Screening Pipeline: Generating unique adaptive assessments and grading diverse response types at scale
+4. Mentorship Routing System: Intelligent matching based on specialization, availability, goals, and booking management
+5. Employer Dashboard & Final Handoff: Integrating filtered candidate pipeline with intuitive dashboard providing actionable insights
+
+================================================================================
+SECTION 4: EXPLICIT FEATURE LIST (EXTRACTED VERBATIM)
+================================================================================
+
+MVP FEATURES:
+1. AI-Powered Personalized Internship Feed
+   - Tailored to user's profile, specialization, and preferences
+   - Recommendation engine using profile vectors, internship metadata, behavioral signals
+
+2. Automated Application Scoring
+   - AI scoring engine classifies candidates upon application
+
+3. Psychomotor Test Delivery (Pass Only)
+   - Dynamic timing and response tracking
+
+4. Situational Analysis (Pass Only)
+   - Dynamically generated questions using prompt-tuned AI models
+   - NLP-based evaluation engine
+
+5. Mentorship Booking (Fair Candidates)
+   - Select mentor by area of specialization
+   - Book sessions and receive guidance
+
+6. CV Revamp Guidance (Fail Candidates)
+   - AI tips and suggestions for enhancement
+
+7. Video Interview Assessment (Final Stage)
+   - Unique, timed video questions
+   - AI grading of speech clarity, content quality, presence metrics
+
+8. Employer Dashboard (Read-Only Mode)
+   - Verified employers see fully evaluated applicants
+   - Breakdowns: CV, scores, video, etc.
+
+KEY DIFFERENTIATORS:
+1. AI-Personalized Opportunity Feed
+2. Multi-Stage Adaptive Evaluation Pipeline (4-staged, AI-evaluated)
+3. Dynamic Test Generation (template-tuned prompts to LLMs)
+4. Mentorship Matching Algorithm (weighted scoring)
+5. Candidate Scoring Transparency
+
+================================================================================
+SECTION 5: STAKEHOLDER MODEL (EXTRACTED VERBATIM)
+================================================================================
+
+STUDENTS:
+- Target: Undergraduate students to mid-career specialists in global health
+- Needs: Verified opportunities, personalized matching, actionable guidance, mentorship access
+
+EMPLOYERS:
+- Target: Global health organizations (WHO, UNICEF, MSF, PATH, GAVI), institutions, agencies
+- Needs: Pre-qualified candidates, reduced hiring time (50% reduction claimed), cultural fit and skills alignment, structured assessment data
+
+MENTORS:
+- Target: Industry experts, senior professionals
+- Needs: Platform to share expertise, income generation, professional network expansion, legacy building
+
+INSTITUTIONS:
+- Target: Universities, professional associations, government bodies
+- Examples: WHO, UNICEF, MSF, PATH, GAVI, APHA, Royal Society of Tropical Medicine, USAID, DFID, GIZ
+
+================================================================================
+SECTION 6: WORKFLOW MODEL (EXTRACTED VERBATIM)
+================================================================================
+
+7-STAGE WORKFLOW:
+
+Stage 1: Internship Feed
+- AI-Personalized Opportunity Feed
+
+Stage 2: Application Scoring
+- Automated Application Scoring - AI classifies candidates
+
+Stage 3: Psychomotor Tests
+- Pass Only
+- Dynamic timing and response tracking
+
+Stage 4: Situational Analysis
+- Pass Only
+- Dynamically generated questions
+- NLP-based evaluation
+
+Stage 5: Mentorship or CV Routing
+- Pass candidates -> Mentorship booking (select by specialization)
+- Fail candidates -> CV Revamp Guidance with AI tips
+
+Stage 6: Video Interview
+- Final Stage
+- Unique timed video questions
+- AI grading: speech clarity, content quality, presence metrics
+
+Stage 7: Employer Handoff
+- Employer Dashboard (Read-Only Mode)
+- Fully evaluated applicants with breakdowns (CV, scores, video, etc.)
+
+================================================================================
+SECTION 7: REVENUE MODEL (EXTRACTED VERBATIM)
+================================================================================
+
+Revenue Streams:
+1. Subscriptions (premium services)
+2. Mentorship (mentorship programs)
+3. CV Services (premium CV services)
+4. Success Fees (placement-based fees)
+
+Projections:
+- Monthly: $1.98M
+- Annual: $23.76M
+
+================================================================================
+SECTION 8: TECHNICAL CONSTRAINTS (EXTRACTED VERBATIM)
+================================================================================
+
+LATENCY:
+- Reduce AI scoring latency across all stages
+- Optimize internship feed generation
+
+VERIFICATION:
+- Credential verification APIs to validate degree claims
+- Verified internship listings
+
+SCALABILITY:
+- Lightweight video compression
+- Progress tracking and failover mechanisms
+- Geographic content delivery optimization (CDN for Africa, Asia)
+- Multi-region deployment for latency and compliance
+
+BIAS REDUCTION:
+- Automated, objective evaluation
+- Reducing human bias in filtering
+
+STRUCTURED ASSESSMENT:
+- Multi-stage adaptive evaluation pipeline
+- Progressive 4-staged AI-evaluated workflow
+- Each stage adapts based on prior performance
+
+================================================================================
+SECTION 9: DEVELOPMENT METHODOLOGY (EXTRACTED VERBATIM)
+================================================================================
+
+Approach: Agile Scrum
+
+Practices:
+- 2-week sprints
+- Sprint planning
+- Daily standups
+- Sprint reviews
+- Retrospectives
+- Continuous backlog grooming
+- User-centric, high-impact tasks
+- Rapid iteration cycles
+- Early user testing
+
+================================================================================
+SECTION 10: SHORT-TERM TIMELINE (3-6 MONTHS) - EXTRACTED VERBATIM
+================================================================================
+
+PERFORMANCE & OPTIMIZATION:
+- Reduce AI scoring latency across all stages
+- Optimize internship feed generation
+- Improve video infrastructure: lightweight compression, progress tracking, failover mechanisms
+
+FEATURE ENHANCEMENTS:
+- Mentorship booking upgrades
+- AI scoring dashboard for admins to audit scoring
+
+NEW INTEGRATIONS:
+- OAuth 2.0 for institutional logins (university SSO, LinkedIn for profile import)
+- Credential verification APIs to validate degree claims
+
+TECHNICAL DEBT RESOLUTION:
+- Refactor monolith modules in preparation for microservice transition
+- Strengthen DTO validation and request throttling for input sanitization and protection
+
+================================================================================
+SECTION 11: LONG-TERM VISION - EXTRACTED VERBATIM
+================================================================================
+
+DEEPER AI/ML INTEGRATION:
+- Dynamic skill gap mapping engine
+- AI-powered career path recommendations
+- Mentor matching via AI-driven compatibility
+
+PLATFORM EXPANSION:
+- Launch mobile app (iOS/Android) with offline features
+- Build institutional dashboards for universities to track student performance
+
+ADVANCED ASSESSMENT LAYER:
+- Gamified behavioral assessments for evaluation & ethical reasoning
+- Simulated fieldwork task module to mimic global health roles
+
+GLOBAL INFRASTRUCTURE SCALING:
+- Geographic content delivery optimization (CDN for Africa, Asia)
+- Multi-region deployment for improved latency and compliance
+
+DATA & ANALYTICS LAYER:
+- Custom analytics for employers
+- Intern dashboards with personal learning analytics and milestone tracking
+
+================================================================================
+SECTION 12: RESOURCE NEEDS - EXTRACTED VERBATIM
+================================================================================
+
+INFRASTRUCTURE & TOOLS:
+- Dedicated LLM finetuning credits (OpenAI/Anthropic or open-source fallback)
+- Cloud video processing tools (Mux, Cloudflare Stream)
+- Production-grade observability stack (Grafana Cloud, Datadog, or Prometheus + Loki)
+- Institutional SSO license and audit log infrastructure
+
+TALENT & ENGINEERING:
+- Senior DevOps Engineer (Sevalla/AWS + CI/CD scaling + microservices orchestration)
+- AI/ML Engineer (NLP focus) for scoring and mentor matchmaking advancement
+- Mobile Developer (React Native or Flutter) for iOS/Android rollout
+- QA Automation Engineer for broader test coverage and regression monitoring
+
+================================================================================
+SECTION 13: MARKET METRICS (EXTRACTED VERBATIM)
+================================================================================
+
+- Annual Health Graduates: 10M+ (UNESCO)
+- Recruitment Market 2028: $47.3B
+- AI Recruitment Market 2029: $1.99B
+
+================================================================================
+END OF KIMI CONTEXT BUNDLE
+================================================================================

@@ -1,0 +1,103 @@
+syntax = "proto3";
+
+package assessment.v1;
+
+option go_package = "github.com/glohib/assessment-service/pkg/proto;assessmentv1";
+
+service AssessmentService {
+  rpc StartAssessment(StartAssessmentRequest) returns (StartAssessmentResponse);
+  rpc GetStatus(GetStatusRequest) returns (GetStatusResponse);
+  rpc SubmitStage(SubmitStageRequest) returns (SubmitStageResponse);
+  rpc GetStageResult(GetStageResultRequest) returns (GetStageResultResponse);
+  rpc StartPsychomotor(StartPsychomotorRequest) returns (StartPsychomotorResponse);
+  rpc SubmitPsychomotor(SubmitPsychomotorRequest) returns (SubmitPsychomotorResponse);
+  rpc StartSituational(StartSituationalRequest) returns (StartSituationalResponse);
+  rpc SubmitSituational(SubmitSituationalRequest) returns (SubmitSituationalResponse);
+  rpc GetFinalResult(GetFinalResultRequest) returns (GetFinalResultResponse);
+}
+
+message StartAssessmentRequest {
+  string candidate_id = 1;
+  string job_id = 2;
+}
+message StartAssessmentResponse {
+  string assessment_id = 1;
+  string stage = 2;
+  int64 expires_at = 3;
+}
+
+message GetStatusRequest { string assessment_id = 1; }
+message GetStatusResponse {
+  string stage = 1;
+  string status = 2;
+  int64 expires_at = 3;
+}
+
+message SubmitStageRequest {
+  string assessment_id = 1;
+  string stage = 2;
+  repeated Answer answers = 3;
+}
+message Answer { string question_id = 1; string text = 2; }
+message SubmitStageResponse {
+  string result = 1;
+  double score = 2;
+  bool passed = 3;
+}
+
+message GetStageResultRequest {
+  string assessment_id = 1;
+  string stage = 2;
+}
+message GetStageResultResponse {
+  double score = 1;
+  bool passed = 2;
+  string feedback = 3;
+}
+
+message StartPsychomotorRequest { string assessment_id = 1; }
+message StartPsychomotorResponse {
+  string session_id = 1;
+  repeated Task tasks = 2;
+  int64 expires_at = 3;
+}
+message Task { string id = 1; string description = 2; string type = 3; }
+
+message SubmitPsychomotorRequest {
+  string assessment_id = 1;
+  string session_id = 2;
+  repeated TaskAnswer answers = 3;
+}
+message TaskAnswer { string task_id = 1; string data = 2; }
+message SubmitPsychomotorResponse {
+  double score = 1;
+  bool passed = 2;
+}
+
+message StartSituationalRequest { string assessment_id = 1; }
+message StartSituationalResponse {
+  string scenario_id = 1;
+  string scenario_text = 2;
+  repeated Option options = 3;
+  int64 expires_at = 4;
+}
+message Option { string id = 1; string text = 2; }
+
+message SubmitSituationalRequest {
+  string assessment_id = 1;
+  string scenario_id = 2;
+  repeated string selected_option_ids = 3;
+}
+message SubmitSituationalResponse {
+  double score = 1;
+  bool passed = 2;
+  string explanation = 3;
+}
+
+message GetFinalResultRequest { string assessment_id = 1; }
+message GetFinalResultResponse {
+  string status = 1;
+  double overall_score = 2;
+  map<string,double> stage_scores = 3;
+  string decision = 4;
+}

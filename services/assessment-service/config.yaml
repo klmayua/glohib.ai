@@ -1,0 +1,30 @@
+db:
+  host: postgres
+  port: 5432
+  user: glohib
+  password: glohib
+  dbname: glohib_db
+  sslmode: disable
+redis:
+  addr: redis:6379
+  password: ""
+  db: 0
+server:
+  port: 8084
+  grpcport: 9004
+  readtimeout: 10
+  writetimeout: 10
+jwt:
+  secret: supersecret-change-me
+  ttl: 3600
+llm:
+  endpoint: http://ai-service:8000
+  apikey: key
+  timeout: 30
+nlp:
+  endpoint: http://ai-service:8000
+  apikey: key
+  timeout: 30
+timer:
+  stagetimeoutminutes: 60
+  warnminutes: 5

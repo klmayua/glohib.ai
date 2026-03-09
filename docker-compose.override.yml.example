@@ -1,0 +1,57 @@
+# Local overrides for development
+# Copy to docker-compose.override.yml and customize
+version: "3.9"
+services:
+  postgres:
+    ports:
+      - "5433:5432"  # Use different port to avoid conflicts
+
+  redis:
+    ports:
+      - "6380:6379"
+
+  minio:
+    ports:
+      - "9002:9000"
+      - "9003:9001"
+
+  api-gateway:
+    volumes:
+      - ./services/go/api-gateway:/app/services/go/api-gateway:ro
+    environment:
+      LOG_LEVEL: debug
+    ports:
+      - "8080:8080"
+
+  auth-service:
+    volumes:
+      - ./services/go/auth-service:/app/services/go/auth-service:ro
+    environment:
+      LOG_LEVEL: debug
+    ports:
+      - "8081:8081"
+
+  user-service:
+    volumes:
+      - ./services/go/user-service:/app/services/go/user-service:ro
+    environment:
+      LOG_LEVEL: debug
+    ports:
+      - "8082:8082"
+
+  ai-service:
+    volumes:
+      - ./services/python:/app/services/python:ro
+    environment:
+      LOG_LEVEL: debug
+      PYTHONPATH: /app/services/python
+    ports:
+      - "8000:8000"
+
+  video-service:
+    volumes:
+      - ./services/node/video-service:/app/services/node/video-service:ro
+    environment:
+      NODE_ENV: development
+    ports:
+      - "3000:3000"

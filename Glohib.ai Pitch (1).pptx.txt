@@ -1,0 +1,228 @@
+GLOHIB
+Where global health talent meets opportunity……
+
+Executive Summary
+Development of a modular, AI-first pipeline for intelligent discovery, automated evaluation, and structured mentorship to enhance global health internships and interns
+ MVP's Core
+Achievement
+Unifying fragmented global health internship discovery and evaluation through AI-driven personalization and automation, addressing deep talent matching and development inefficiencies. 
+Core Problem Solved 
+Revolutionizing global health internship recruitment by solving both user-side (and employer-side inefficiencies by leveraging AI for improved automation & personlisation.
+ Value Proposition 
+Global Health Internship Bank
+
+The Problem 
+1
+75% of CVs rejected before reaching human reviewers
+2
+Lack of verified global health internships
+3
+No centralized platform for AI matching + mentorship
+4
+Hiring cycles in health fields exceed 44 days. 
+5
+Students lack actionable career guidance
+The global health internship ecosystem suffers from significant inefficiencies. Global health professionals face limited access to verified, relevant, and personalized opportunities, often encountering static or keyword-based platforms. Concurrently, organizations struggle with lengthy recruitment cycles, unreliable applicant filtering, and a lack of structured, scalable assessment for intern readiness. 
+
+The Technical Challenges 
+1
+2
+3
+4
+5
+Intelligent Discovery & Feed Generation: Traditional platforms cannot provide personalized, verified internship feeds. The technical hurdle is moving beyond static listings to a dynamic system that intelligently matches opportunities to individual student profiles based on nuanced criteria. 
+AI-Powered Application Scoring Engine: Manual or basic filtering of applications is time-consuming and prone to human bias, leading to unreliable applicant quality assessment. The technical challenge is building an automated, objective, and scalable engine for initial application evaluation. 
+Adaptive Multi-Stage Screening Pipeline: Beyond initial applications, there's a critical gap in structured, scalable assessment of intern readiness. The technical complexity lies in generating unique, adaptive assessment questions and accurately grading diverse response types (text, video) at scale. 
+Mentorship Routing System: A significant technical challenge is creating a robust system to intelligently match non-qualifying candidates with relevant mentors based on specialization, availability, and user goals, as well as to manage the booking and interaction process.
+Employer Dashboard & Final Handoff: Employers are overwhelmed by large volumes of unqualified applicants. The technical hurdle is securely integrating a highly filtered, AI-vetted candidate pipeline with an intuitive employer dashboard that provides detailed, actionable insights into each candidate's performance. 
+
+Why Now? 
+These advancements enable the sophisticated personalization, automated content generation, predictive assessment, and scalable data processing required to tackle these previously intractable challenges globally. 
+Artificial 
+Intelligence
+Machine 
+Learning
+Natural Language 
+Processing
+Large Language 
+Models
+
+1
+2
+3
+4
+5
+6
+7
+8
+AI-Powered Personalized Internship Feed: Internship postings are tailored to user’s profile, specialization, and preferences. 
+Automated Application Scoring: Upon application, the system classifies candidates using an AI scoring engine. 
+Psychomotor Test Delivery (Pass Only): Passed users receive a unique test with dynamic timing and response tracking. 
+The GLOHIB MVP is laser-focused on delivering a fully functional internship discovery, assessment, and mentorship flow. The following features are live or in final development for this MVP: 
+Our MVP’s Core Functionality
+Situational Analysis (Pass Only): Dynamically generated questions using prompt-tuned AI models, graded with an NLP-based evaluation engine. 
+Mentorship Booking (Fair Candidates): Fair candidates can select a mentor by area of specialization, book a session, and receive guidance. 
+CV Revamp Guidance (Fail Candidates): Fail candidates are routed to a CV enhancement interface with AI tips and suggestions. 
+Video Interview Assessment (Final Stage): Unique, timed video questions, with AI grading of speech clarity, content quality, and presence metrics. 
+Employer Dashboard (Read-Only Mode): Verified employers see fully evaluated applicants with breakdowns (CV, scores, video, etc.) for decision-making. 
+
+Key Technical Differentiators (USP) 
+
+AI-Personalized Opportunity Feed 
+
+Built with a sophisticated recommendation engine utilizing profile vectors, internship metadata, and behavioral signals.  
+1
+
+Multi-Stage Adaptive Evaluation Pipeline 
+
+It's a progressive, 4-staged, AI-evaluated workflow:  Each subsequent stage intelligently adapts based on the candidate's performance in the prior stage.  
+2
+
+Dynamic Test Generation 
+
+Situational and psychomotor tests are not static. GLOHIB uses template-tuned prompts to LLMs to generate unique test flows for each applicant, ensuring test integrity and variety. .  
+3
+
+Mentorship Matching Algorithm 
+
+Candidate scores are intelligently paired with mentor availability, specialization tags, and timezone constraints using a weighted scoring algorithm to maximize mentor-intern compatibility. 
+4
+
+Candidate Scoring Transparency: 
+
+The system provides clear visibility into every stage of the scoring process, along with suggested improvements and pass/fail logic backed by AI metrics. 
+5
+
+Engineering Excellence at GLOHIB.ai
+Development Methodology:  We follow the Agile Scrum methodology to ensure iterative development, continuous feedback, and adaptive planning 
+
+Scrum in Practice at GLOHIB
+
+We operate in 2-week sprints, complete with sprint planning, daily standups, sprint reviews, and retrospectives. Backlog grooming is continuous, ensuring the team is always focused on user-centric, high-impact tasks. This approach fosters rapid iteration cycles, allowing for early user testing of features like internship matching, test flows, and mentor booking. This methodology ensures tight alignment across frontend, backend, and AI engineering efforts, enabling GLOHIB to adapt quickly to user feedback while maintaining development velocity. 
+
+
+Key Market Metrics 
+According to UNESCO, over 10 million students graduate from health-related programs each year, signaling immense potential for internships and job placements.
+10M+ Annual Health Graduates
+Recruitment & Mentorship Market
+The online recruitment industry is projected to hit $47.3B by 2028, while the AI recruitment market will reach $1.99B by 2029 — showing growing demand for smart hiring tools.
+GLOHIB’s Revenue Projection
+With premium CV services, mentorship programs, and success fees, GLOHIB expects to earn $1.98M monthly, totaling $23.76M annually
+
+Market Strategy  
+Institutional Partnerships
+Execute MOUs with leading global health organizations (WHO, UNICEF, MSF, PATH, GAVI) establishing exclusive internship pipelines
+Partner with top-tier universities offering global health programs for direct student access and curriculum integration
+Collaborate with professional associations (APHA, Royal Society of Tropical Medicine) for credibility and member access
+Establish partnerships with health ministries in key emerging markets for workforce development initiatives
+
+Partner with international development agencies (USAID, DFID, GIZ) for funding and program integration
+
+Collaborate with bilateral health programs for structured internship placements
+Government and NGO Alliances
+Waitlist and Community Building (Pre-Launch)
+Phase 1
+Phase 2
+Phase 3
+Strategic Launch and Network Effects (0-6 months)
+Scale and Market Penetration (6-18 months)
+Global Distribution Strategy
+
+SWOT Analysis  
+Strengths
+Market Leadership in Specialized Niche
+Advanced AI-Powered Technology Stack 
+Comprehensive Integrated Solution
+Strong Revenue Model with Multiple Streams
+Platform Development Progress
+Threats
+Competitive Entry from Established Platforms 
+Economic Sensitivity of Internship Funding
+Regulatory and Compliance Challenges
+Technology and Security Risks 
+University and Employer Direct Solutions
+Market Saturation and Commoditization 
+Weaknesses
+Unestablished User Base and Market Presence
+Platform Still in Development Phase
+Dependency on Conversion Rate Assumptions
+Opportunities
+Massive Addressable Market with Growing Demand
+Strategic Partnership Potential
+Geographic and Sectoral Expansion 
+Technology Enhancement and Integration
+Policy and Funding Environment 
+
+Value Proposition 
+GLOHIB.ai is the comprehensive career acceleration platform that connects emerging and transitioning global health professionals—from undergraduate students to mid-career specialists seeking new opportunities—with verified internships, expert mentorship, and career-defining experiences that traditional recruitment channels cannot provide.
+Global Health Professionals 
+GLOHIB.ai delivers pre-qualified, motivated global health talent through AI-powered matching that reduces hiring time by 50% while ensuring cultural fit and skills alignment, backed by our comprehensive verification system and ongoing mentor support.
+Organizations and Employers 
+GLOHIB.ai provides a structured, profitable platform for sharing expertise while building professional legacy through scalable mentorship opportunities that generate meaningful income streams and expand professional networks.
+
+Mentors and Industry Experts
+
+Revenue Model  
+Commission
+Subscription
+Sales
+
+Short Term Timeline (3-6 Months)  
+Performance & Optimization:  
+
+Reduce AI scoring latency across all stages 
+Optimize internship feed generation
+Improve video infrastructure: lightweight compression, progress tracking, and failover mechanisms. 
+Feature Enhancements: 
+
+Mentorship booking upgrades, including
+AI scoring dashboard for admins to audit scoring). 
+New Integrations:
+
+OAuth 2.0 for institutional logins (university SSO, LinkedIn for profile import). 
+Credential verification APIs to validate degree claims.
+Technical Debt Resolution: 
+
+Refactor monolith modules in preparation for microservice transition. 
+Strengthen DTO validation and request throttling for better input sanitization and protection. 
+
+Long Term Vision  
+Deeper AI/ML Integration
+
+ Dynamic skill gap mapping engine:
+AI-powered career path recommendations 
+Mentor matching via AI-driven compatibility 
+Platform Expansion: 
+
+Launch mobile app (iOS/Android) with offline features.
+Build institutional dashboards for universities to track student’s performance 
+
+Advanced Assessment Layer:
+ 
+Introduce gamified behavioral assessments for evaluation & ethical reasoning. 
+Build a simulated fieldwork task module, to mimic global health roles. 
+Global Infrastructure Scaling: 
+
+Geographic content delivery optimization (e.g., CDN for Africa, Asia). 
+Multi-region deployment for improved latency and compliance. 
+Data & Analytics Layer: 
+
+Custom analytics for employers.
+Intern dashboards with personal learning analytics and milestone tracking.
+
+Resource Needs 
+Dedicated LLM finetuning credits (OpenAI/Anthropic or open-source fallback) 
+Cloud video processing tools (e.g., Mux, Cloudflare Stream) to reduce manual processing load 
+Production-grade observability stack (Grafana Cloud, Datadog, or Prometheus + Loki) 
+Institutional SSO license and audit log infrastructure 
+Infrastructure & Tools 
+Senior DevOps Engineer (Sevalla/AWS + CI/CD scaling + microservices orchestration) 
+AI/ML Engineer (NLP focus) to advance scoring and mentor matchmaking 
+Mobile Developer (React Native or Flutter) for iOS/Android rollout 
+QA Automation Engineer for broader test coverage and regression monitoring 
+Talent & Engineering  
+
+CONTACT US
+Glohib.ai
+Glohib.ai
+Globalhealthinternshipbank@gmail.com

@@ -1,0 +1,289 @@
+version: "3.9"
+
+x-common-variables: &common-variables
+  POSTGRES_USER: ${POSTGRES_USER:-glohib}
+  POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+  POSTGRES_DB: ${POSTGRES_DB:-glohib_db}
+  POSTGRES_HOST: postgres
+  POSTGRES_PORT: 5432
+  REDIS_URL: redis://redis:6379
+  REDIS_HOST: redis
+  REDIS_PORT: 6379
+  MINIO_ENDPOINT: minio:9000
+  MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+  MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
+  MINIO_BUCKET: ${MINIO_BUCKET:-glohib}
+
+services:
+  # ============================================================================
+  # INFRASTRUCTURE SERVICES
+  # ============================================================================
+
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: glohib-postgres
+    restart: unless-stopped
+    environment:
+      <<: *common-variables
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/init_postgres.sql:/docker-entrypoint-initdb.d/init_postgres.sql:ro
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-glohib}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - glohib-net
+
+  redis:
+    image: redis:7-alpine
+    container_name: glohib-redis
+    restart: unless-stopped
+    command: redis-server --save 60 1 --loglevel warning
+    volumes:
+      - redis_data:/data
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks:
+      - glohib-net
+
+  minio:
+    image: minio/minio:latest
+    container_name: glohib-minio
+    restart: unless-stopped
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
+    volumes:
+      - minio_data:/data
+    ports:
+      - "${MINIO_PORT:-9000}:9000"
+      - "${MINIO_CONSOLE_PORT:-9001}:9001"
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - glohib-net
+
+  # ============================================================================
+  # IDENTITY DOMAIN
+  # ============================================================================
+
+  identity-service:
+    build:
+      context: ./services/identity-service
+      dockerfile: Dockerfile
+    container_name: glohib-identity-service
+    restart: unless-stopped
+    environment:
+      <<: *common-variables
+      JWT_SECRET: ${JWT_SECRET:-super-secret-change-me}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+    ports:
+      - "${IDENTITY_HTTP_PORT:-8080}:8080"
+      - "${IDENTITY_GRPC_PORT:-50051}:50051"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - glohib-net
+
+  # ============================================================================
+  # STUDENT DOMAIN
+  # ============================================================================
+
+  student-service:
+    build:
+      context: ./services/student-service
+      dockerfile: Dockerfile
+    container_name: glohib-student-service
+    restart: unless-stopped
+    environment:
+      <<: *common-variables
+    ports:
+      - "${STUDENT_HTTP_PORT:-8082}:8082"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      identity-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8082/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - glohib-net
+
+  # ============================================================================
+  # INTERNSHIP DOMAIN
+  # ============================================================================
+
+  internship-service:
+    build:
+      context: ./services/internship-service
+      dockerfile: Dockerfile
+    container_name: glohib-internship-service
+    restart: unless-stopped
+    environment:
+      <<: *common-variables
+    ports:
+      - "${INTERNSHIP_HTTP_PORT:-8083}:8083"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8083/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - glohib-net
+
+  # ============================================================================
+  # ASSESSMENT DOMAIN
+  # ============================================================================
+
+  assessment-service:
+    build:
+      context: ./services/assessment-service
+      dockerfile: Dockerfile
+    container_name: glohib-assessment-service
+    restart: unless-stopped
+    environment:
+      <<: *common-variables
+    ports:
+      - "${ASSESSMENT_HTTP_PORT:-8084}:8084"
+      - "${ASSESSMENT_GRPC_PORT:-50054}:50054"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8084/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - glohib-net
+
+  # ============================================================================
+  # INTELLIGENCE DOMAIN (AI Services)
+  # ============================================================================
+
+  recommendation-service:
+    build:
+      context: ./services/recommendation-service
+      dockerfile: Dockerfile
+    container_name: glohib-recommendation-service
+    restart: unless-stopped
+    environment:
+      <<: *common-variables
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+    ports:
+      - "${RECOMMENDATION_PORT:-8007}:8007"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8007/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - glohib-net
+
+  scoring-service:
+    build:
+      context: ./services/scoring-service
+      dockerfile: Dockerfile
+    container_name: glohib-scoring-service
+    restart: unless-stopped
+    environment:
+      <<: *common-variables
+    ports:
+      - "${SCORING_PORT:-8008}:8008"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8008/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - glohib-net
+
+  # ============================================================================
+  # MEDIA DOMAIN
+  # ============================================================================
+
+  video-service:
+    build:
+      context: ./services/video-service
+      dockerfile: Dockerfile
+    container_name: glohib-video-service
+    restart: unless-stopped
+    environment:
+      <<: *common-variables
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+    ports:
+      - "${VIDEO_PORT:-4000}:4000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:4000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    networks:
+      - glohib-net
+
+volumes:
+  postgres_data:
+  redis_data:
+  minio_data:
+
+networks:
+  glohib-net:
+    driver: bridge

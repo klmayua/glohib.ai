@@ -1,0 +1,22 @@
+server:
+  host: "0.0.0.0"
+  port: 8083
+  grpc_port: 50053
+  read_timeout: 15s
+  write_timeout: 15s
+
+database:
+  host: "postgres"
+  port: 5432
+  user: "glohib"
+  password: "changeme"
+  database: "glohib_db"
+  ssl_mode: "disable"
+
+redis:
+  host: "redis"
+  port: 6379
+
+services:
+  embedding_service_url: "http://ai-service:8000"
+  auth_service_url: "http://identity-service:8080"

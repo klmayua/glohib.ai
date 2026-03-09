@@ -1,0 +1,456 @@
+# ================================================================================
+# GLOHIB.AI - STEP 1: PROJECT STRUCTURE & CONFIGURATION
+# Detailed YAML Specification for Execution
+# ================================================================================
+
+step_metadata:
+  step_id: "FOUND-001"
+  step_name: "Project Structure & Configuration"
+  phase: "Phase 1: Foundation Setup"
+  priority: "P0"
+  estimated_minutes: 45
+  owner: "Build Orchestrator"
+  status: "PENDING_EXECUTION"
+  dependencies: []
+
+# ================================================================================
+# CONTEXT
+# ================================================================================
+
+context: |
+  This step establishes the foundational project structure for Glohib.ai.
+  Based on Kimi's architecture:
+  - Frontend: Next.js 14 (React Server Components)
+  - Backend: Go 1.22 (core services) + Python 3.11 (AI services)
+  - Infrastructure: Kubernetes, Docker, Terraform
+  
+  We need to create a monorepo structure that supports all services.
+
+# ================================================================================
+# TASKS
+# ================================================================================
+
+tasks:
+  - task_id: "1.1"
+    name: "Create Root package.json"
+    action: "create_file"
+    file_path: "C:\\Users\\UCHE\\my-qwen-project\\glohib\\package.json"
+    description: "Root package.json for workspace management and shared scripts"
+    content: |
+      {
+        "name": "glohib",
+        "version": "0.1.0",
+        "private": true,
+        "description": "AI-first Global Health Internship Intelligence Platform",
+        "workspaces": [
+          "frontend/*",
+          "services/*"
+        ],
+        "scripts": {
+          "dev": "concurrently \\"npm run dev:frontend\\" \\"npm run dev:backend\\"",
+          "dev:frontend": "npm run dev --workspace=frontend/web",
+          "dev:backend": "npm run dev --workspace=services/api",
+          "build": "npm run build --workspaces",
+          "test": "npm run test --workspaces",
+          "lint": "npm run lint --workspaces",
+          "typecheck": "npm run typecheck --workspaces"
+        },
+        "devDependencies": {
+          "concurrently": "^8.2.2",
+          "typescript": "^5.3.3"
+        },
+        "engines": {
+          "node": ">=20.0.0",
+          "npm": ">=10.0.0"
+        }
+      }
+
+  - task_id: "1.2"
+    name: "Create Root requirements.txt"
+    action: "create_file"
+    file_path: "C:\\Users\\UCHE\\my-qwen-project\\glohib\\requirements.txt"
+    description: "Root Python dependencies for AI services"
+    content: |
+      # Glohib.ai - Root Python Dependencies
+      # AI Services & ML Pipeline
+      
+      # Core ML
+      torch>=2.1.0
+      torchvision>=0.16.0
+      transformers>=4.36.0
+      sentence-transformers>=2.2.2
+      
+      # NLP
+      nltk>=3.8.1
+      spacy>=3.7.2
+      langchain>=0.1.0
+      
+      # ML Operations
+      xgboost>=2.0.3
+      scikit-learn>=1.3.2
+      shap>=0.43.0
+      
+      # Vector Database
+      pgvector>=0.2.4
+      psycopg2-binary>=2.9.9
+      
+      # Ray Serve for AI orchestration
+      ray[serve]>=2.8.1
+      
+      # Video Processing
+      whisper-openai>=1.20231117
+      mediapipe>=0.10.9
+      
+      # API & Web
+      fastapi>=0.106.0
+      uvicorn[standard]>=0.25.0
+      python-multipart>=0.0.6
+      
+      # Testing
+      pytest>=7.4.3
+      pytest-asyncio>=0.23.2
+      
+      # Utilities
+      python-dotenv>=1.0.0
+      pydantic>=2.5.2
+      pydantic-settings>=2.1.0
+
+  - task_id: "1.3"
+    name: "Create TypeScript Configuration"
+    action: "create_file"
+    file_path: "C:\\Users\\UCHE\\my-qwen-project\\glohib\\tsconfig.json"
+    description: "Root TypeScript configuration for the monorepo"
+    content: |
+      {
+        "compilerOptions": {
+          "target": "ES2022",
+          "lib": ["ES2022", "DOM", "DOM.Iterable"],
+          "module": "ESNext",
+          "moduleResolution": "bundler",
+          "resolveJsonModule": true,
+          "isolatedModules": true,
+          "esModuleInterop": true,
+          "strict": true,
+          "noUnusedLocals": true,
+          "noUnusedParameters": true,
+          "noFallthroughCasesInSwitch": true,
+          "skipLibCheck": true,
+          "declaration": true,
+          "declarationMap": true,
+          "sourceMap": true,
+          "composite": true,
+          "incremental": true,
+          "baseUrl": ".",
+          "paths": {
+            "@glohib/*": ["services/*/src/*"],
+            "@frontend/*": ["frontend/*/src/*"]
+          }
+        },
+        "include": [],
+        "exclude": ["node_modules", "dist", "build", "**/vendor/**"]
+      }
+
+  - task_id: "1.4"
+    name: "Create .env.example"
+    action: "create_file"
+    file_path: "C:\\Users\\UCHE\\my-qwen-project\\glohib\\.env.example"
+    description: "Environment variables template with placeholders"
+    content: |
+      # ================================================================================
+      # GLOHIB.AI - ENVIRONMENT CONFIGURATION
+      # Copy this file to .env and fill in your actual values
+      # ================================================================================
+      
+      # ------------------------------------------------------------------------------
+      # AI API KEYS (Moonshot/Kimi, OpenAI, etc.)
+      # ------------------------------------------------------------------------------
+      KIMI_API_KEY=sk-your_kimi_api_key_here
+      KIMI_BASE_URL=https://api.moonshot.ai/v1
+      KIMI_MODEL=kimi-k2-turbo-preview
+      
+      OPENAI_API_KEY=sk-your_openai_api_key_here
+      OPENAI_MODEL=gpt-4-turbo-preview
+      
+      # For self-hosted Llama models
+      LLAMA_MODEL_PATH=/path/to/llama-3-8b
+      
+      # ------------------------------------------------------------------------------
+      # DATABASE - PostgreSQL
+      # ------------------------------------------------------------------------------
+      DATABASE_HOST=localhost
+      DATABASE_PORT=5432
+      DATABASE_NAME=glohib
+      DATABASE_USER=glohib_admin
+      DATABASE_PASSWORD=your_secure_password_here
+      DATABASE_URL=postgresql://glohib_admin:your_secure_password_here@localhost:5432/glohib
+      
+      # Redis for caching and queues
+      REDIS_URL=redis://localhost:6379
+      REDIS_HOST=localhost
+      REDIS_PORT=6379
+      
+      # ------------------------------------------------------------------------------
+      # OBJECT STORAGE - MinIO (local) / S3 (production)
+      # ------------------------------------------------------------------------------
+      MINIO_ENDPOINT=localhost:9000
+      MINIO_ACCESS_KEY=minioadmin
+      MINIO_SECRET_KEY=minioadmin
+      MINIO_BUCKET=glohib-assets
+      
+      # Production S3
+      AWS_ACCESS_KEY_ID=your_aws_access_key
+      AWS_SECRET_ACCESS_KEY=your_aws_secret_key
+      AWS_REGION=us-east-1
+      S3_BUCKET=glohib-production
+      
+      # ------------------------------------------------------------------------------
+      # JWT & SESSION
+      # ------------------------------------------------------------------------------
+      JWT_SECRET=your_jwt_secret_minimum_32_characters
+      JWT_EXPIRATION=24h
+      SESSION_SECRET=your_session_secret_minimum_32_characters
+      
+      # ------------------------------------------------------------------------------
+      # API KEYS & RATE LIMITING
+      # ------------------------------------------------------------------------------
+      API_RATE_LIMIT=100
+      API_RATE_LIMIT_WINDOW=60
+      
+      # ------------------------------------------------------------------------------
+      # OBSERVABILITY
+      # ------------------------------------------------------------------------------
+      GRAFANA_CLOUD_URL=https://prometheus-prod-01-eu-west-0.grafana.net/api/prom/push
+      GRAFANA_CLOUD_USERNAME=your_grafana_username
+      GRAFANA_CLOUD_PASSWORD=your_grafana_password
+      
+      # OpenTelemetry
+      OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4317
+      OTEL_SERVICE_NAME=glohib
+      
+      # ------------------------------------------------------------------------------
+      # FEATURE FLAGS
+      # ------------------------------------------------------------------------------
+      ENABLE_VIDEO_ASSESSMENT=true
+      ENABLE_MENTORSHIP_MATCHING=true
+      ENABLE_ANALYTICS=true
+      DEBUG_MODE=false
+      
+      # ------------------------------------------------------------------------------
+      # ENVIRONMENT
+      # ------------------------------------------------------------------------------
+      NODE_ENV=development
+      PYTHONUNBUFFERED=1
+
+  - task_id: "1.5"
+    name: "Create .gitignore"
+    action: "create_file"
+    file_path: "C:\\Users\\UCHE\\my-qwen-project\\glohib\\.gitignore"
+    description: "Comprehensive .gitignore for multi-language monorepo"
+    content: |
+      # ================================================================================
+      # GLOHIB.AI - GITIGNORE
+      # Comprehensive ignore patterns for monorepo
+      # ================================================================================
+      
+      # ------------------------------------------------------------------------------
+      # Environment & Secrets (CRITICAL - NEVER COMMIT)
+      # ------------------------------------------------------------------------------
+      .env
+      .env.*
+      !.env.example
+      *.pem
+      *.key
+      *.crt
+      secrets/
+      credentials/
+      
+      # ------------------------------------------------------------------------------
+      # Dependencies
+      # ------------------------------------------------------------------------------
+      node_modules/
+      vendor/
+      __pycache__/
+      *.pyc
+      *.pyo
+      *.pyd
+      .Python
+      pip-log.txt
+      pip-delete-this-directory.txt
+      
+      # ------------------------------------------------------------------------------
+      # Build Outputs
+      # ------------------------------------------------------------------------------
+      dist/
+      build/
+      out/
+      next-env.d.ts
+      .next/
+      *.tsbuildinfo
+      
+      # ------------------------------------------------------------------------------
+      # Docker
+      # ------------------------------------------------------------------------------
+      docker-compose.override.yml
+      !docker-compose.override.yml.example
+      .docker/
+      
+      # ------------------------------------------------------------------------------
+      # IDE & Editor
+      # ------------------------------------------------------------------------------
+      .idea/
+      .vscode/
+      *.swp
+      *.swo
+      *~
+      .DS_Store
+      Thumbs.db
+      
+      # ------------------------------------------------------------------------------
+      # Logs
+      # ------------------------------------------------------------------------------
+      logs/
+      *.log
+      npm-debug.log*
+      yarn-debug.log*
+      yarn-error.log*
+      
+      # ------------------------------------------------------------------------------
+      # Testing
+      # ------------------------------------------------------------------------------
+      coverage/
+      .pytest_cache/
+      .coverage
+      htmlcov/
+      
+      # ------------------------------------------------------------------------------
+      # Kubernetes & Terraform (selective)
+      # ------------------------------------------------------------------------------
+      # Keep manifests, ignore secrets
+      *-secret.yaml
+      terraform.tfstate
+      terraform.tfstate.backup
+      .terraform/
+      
+      # ------------------------------------------------------------------------------
+      # Data & Uploads (local development)
+      # ------------------------------------------------------------------------------
+      data/local/
+      uploads/
+      temp/
+      tmp/
+      
+      # ------------------------------------------------------------------------------
+      # Video Processing
+      # ------------------------------------------------------------------------------
+      video_cache/
+      *.mp4
+      *.webm
+      !*.md
+      
+      # ------------------------------------------------------------------------------
+      # Database (local development)
+      # ------------------------------------------------------------------------------
+      *.db
+      *.sqlite
+      data/postgres/
+
+  - task_id: "1.6"
+    name: "Create Folder Structure"
+    action: "create_directories"
+    directories:
+      - "C:\\Users\\UCHE\\my-qwen-project\\glohib\\frontend\\web\\src\\app"
+      - "C:\\Users\\UCHE\\my-qwen-project\\glohib\\frontend\\web\\src\\components"
+      - "C:\\Users\\UCHE\\my-qwen-project\\glohib\\frontend\\web\\src\\lib"
+      - "C:\\Users\\UCHE\\my-qwen-project\\glohib\\frontend\\web\\src\\hooks"
+      - "C:\\Users\\UCHE\\my-qwen-project\\glohib\\frontend\\web\\public"
+      - "C:\\Users\\UCHE\\my-qwen-project\\glohib\\services\\identity-svc\\cmd"
+      - "C:\\Users\\UCHE\\my-qwen-project\\glohib\\services\\identity-svc\\internal\\handlers"
+      - "C:\\Users\\UCHE\\my-qwen-project\\glohib\\services\\identity-svc\\internal\\models"
+      - "C:\\Users\\UCHE\\my-qwen-project\\glohib\\services\\identity-svc\\pkg\\proto"
+      - "C:\\Users\\UCHE\\my-qwen-project\\glohib\\services\\student-svc\\cmd"
+      - "C:\\Users\\UCHE\\my-qwen-project\\glohib\\services\\student-svc\\internal\\handlers"
+      - "C:\\Users\\UCHE\\my-qwen-project\\glohib\\services\\student-svc\\internal\\models"
+      - "C:\\Users\\UCHE\\my-qwen-project\\glohib\\services\\internship-svc\\cmd"
+      - "C:\\Users\\UCHE\\my-qwen-project\\glohib\\services\\internship-svc\\internal\\handlers"
+      - "C:\\Users\\UCHE\\my-qwen-project\\glohib\\services\\recommendation-svc\\app"
+      - "C:\\Users\\UCHE\\my-qwen-project\\glohib\\services\\recommendation-svc\\models"
+      - "C:\\Users\\UCHE\\my-qwen-project\\glohib\\services\\scoring-svc\\app"
+      - "C:\\Users\\UCHE\\my-qwen-project\\glohib\\services\\scoring-svc\\models"
+      - "C:\\Users\\UCHE\\my-qwen-project\\glohib\\services\\assessment-svc\\cmd"
+      - "C:\\Users\\UCHE\\my-qwen-project\\glohib\\services\\video-svc\\src"
+      - "C:\\Users\\UCHE\\my-qwen-project\\glohib\\services\\mentor-svc\\cmd"
+      - "C:\\Users\\UCHE\\my-qwen-project\\glohib\\services\\analytics-svc\\cmd"
+      - "C:\\Users\\UCHE\\my-qwen-project\\glohib\\infrastructure\\docker"
+      - "C:\\Users\\UCHE\\my-qwen-project\\glohib\\infrastructure\\k8s"
+      - "C:\\Users\\UCHE\\my-qwen-project\\glohib\\infrastructure\\terraform"
+      - "C:\\Users\\UCHE\\my-qwen-project\\glohib\\database\\migrations"
+      - "C:\\Users\\UCHE\\my-qwen-project\\glohib\\database\\schemas"
+      - "C:\\Users\\UCHE\\my-qwen-project\\glohib\\docs\\api"
+      - "C:\\Users\\UCHE\\my-qwen-project\\glohib\\docs\\architecture"
+      - "C:\\Users\\UCHE\\my-qwen-project\\glohib\\scripts"
+      - "C:\\Users\\UCHE\\my-qwen-project\\glohib\\tests\\e2e"
+      - "C:\\Users\\UCHE\\my-qwen-project\\glohib\\tests\\integration"
+
+# ================================================================================
+# DELIVERABLES
+# ================================================================================
+
+deliverables:
+  - "package.json created at root"
+  - "requirements.txt created at root"
+  - "tsconfig.json created at root"
+  - ".env.example created with all required variables"
+  - ".gitignore created with comprehensive patterns"
+  - "Folder structure created for all services"
+
+# ================================================================================
+# VERIFICATION CHECKLIST
+# ================================================================================
+
+verification_checklist:
+  - [ ] package.json exists and is valid JSON
+  - [ ] requirements.txt exists with all dependencies
+  - [ ] tsconfig.json exists and is valid JSON
+  - [ ] .env.example contains all required environment variables
+  - [ ] .gitignore covers all sensitive patterns
+  - [ ] All service directories created
+  - [ ] Frontend directories created
+  - [ ] Infrastructure directories created
+  - [ ] Database directories created
+  - [ ] Docs directories created
+
+# ================================================================================
+# EXECUTION COMMANDS
+# ================================================================================
+
+execution_commands:
+  - description: "Create all directories"
+    command: |
+      mkdir -p frontend/web/src/app frontend/web/src/components frontend/web/src/lib frontend/web/src/hooks frontend/web/public
+      mkdir -p services/identity-svc/cmd services/identity-svc/internal/handlers services/identity-svc/internal/models services/identity-svc/pkg/proto
+      mkdir -p services/student-svc/cmd services/student-svc/internal/handlers services/student-svc/internal/models
+      mkdir -p services/internship-svc/cmd services/internship-svc/internal/handlers services/internship-svc/internal/models
+      mkdir -p services/recommendation-svc/app services/recommendation-svc/models
+      mkdir -p services/scoring-svc/app services/scoring-svc/models
+      mkdir -p services/assessment-svc/cmd
+      mkdir -p services/video-svc/src
+      mkdir -p services/mentor-svc/cmd
+      mkdir -p services/analytics-svc/cmd
+      mkdir -p infrastructure/docker infrastructure/k8s infrastructure/terraform
+      mkdir -p database/migrations database/schemas
+      mkdir -p docs/api docs/architecture
+      mkdir -p scripts
+      mkdir -p tests/e2e tests/integration
+
+# ================================================================================
+# NEXT STEP
+# ================================================================================
+
+next_step:
+  step_id: "FOUND-002"
+  step_name: "Database Schema Setup"
+  description: "Create PostgreSQL schemas for all tables"
+
+# ================================================================================
+# END OF YAML SPECIFICATION
+# ================================================================================

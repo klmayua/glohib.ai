@@ -1,0 +1,257 @@
+# GLOHIB.AI - STRUCTURED INTELLIGENCE EXTRACTION
+# Source: Glohib.ai Pitch (1).pptx.pdf
+# Extraction Mode: Forensic (No Interpretation)
+
+product_identity:
+  mission: "Where global health talent meets opportunity"
+  problem_space:
+    - "75% of CVs rejected before reaching human reviewers"
+    - "Lack of verified global health internships"
+    - "No centralized platform for AI matching + mentorship"
+    - "Hiring cycles in health fields exceed 44 days"
+    - "Students lack actionable career guidance"
+    - "Global health internship ecosystem suffers from significant inefficiencies"
+    - "Limited access to verified, relevant, and personalized opportunities"
+    - "Static or keyword-based platforms"
+    - "Lengthy recruitment cycles"
+    - "Unreliable applicant filtering"
+    - "Lack of structured, scalable assessment for intern readiness"
+  value_proposition:
+    students: "Comprehensive career acceleration platform connecting emerging and transitioning global health professionals—from undergraduate students to mid-career specialists seeking new opportunities—with verified internships, expert mentorship, and career-defining experiences that traditional recruitment channels cannot provide"
+    employers: "Pre-qualified, motivated global health talent through AI-powered matching that reduces hiring time by 50% while ensuring cultural fit and skills alignment, backed by comprehensive verification system and ongoing mentor support"
+    mentors: "Structured, profitable platform for sharing expertise while building professional legacy through scalable mentorship opportunities that generate meaningful income streams and expand professional networks"
+  user_segments:
+    - "Undergraduate students in health-related programs"
+    - "Mid-career specialists seeking new opportunities"
+    - "Global health organizations (WHO, UNICEF, MSF, PATH, GAVI)"
+    - "Universities offering global health programs"
+    - "Professional associations (APHA, Royal Society of Tropical Medicine)"
+    - "Health ministries in emerging markets"
+    - "International development agencies (USAID, DFID, GIZ)"
+    - "Bilateral health programs"
+
+system_capabilities:
+  discovery_engine:
+    name: "AI-Powered Personalized Internship Feed"
+    description: "Internship postings tailored to user's profile, specialization, and preferences"
+    technical_approach: "Sophisticated recommendation engine utilizing profile vectors, internship metadata, and behavioral signals"
+  scoring_engine:
+    name: "Automated Application Scoring"
+    description: "Upon application, the system classifies candidates using an AI scoring engine"
+  screening_pipeline:
+    name: "Adaptive Multi-Stage Screening Pipeline"
+    stages:
+      - "Psychomotor Test Delivery (Pass Only)"
+      - "Situational Analysis (Pass Only)"
+      - "Video Interview Assessment (Final Stage)"
+  mentorship_routing:
+    name: "Mentorship Booking System"
+    description: "Fair candidates can select a mentor by area of specialization, book a session, and receive guidance"
+    matching_algorithm: "Candidate scores intelligently paired with mentor availability, specialization tags, and timezone constraints using weighted scoring algorithm"
+  employer_dashboard:
+    name: "Employer Dashboard (Read-Only Mode)"
+    description: "Verified employers see fully evaluated applicants with breakdowns (CV, scores, video, etc.) for decision-making"
+
+ai_layers:
+  personalization:
+    - "Profile vectors for user matching"
+    - "Behavioral signals for feed generation"
+    - "Dynamic timing and response tracking"
+  nlp_evaluation:
+    - "NLP-based evaluation engine for situational analysis"
+    - "Speech clarity evaluation"
+    - "Content quality evaluation"
+  dynamic_test_generation:
+    - "Template-tuned prompts to LLMs for unique test flows"
+    - "Dynamically generated questions using prompt-tuned AI models"
+    - "Ensures test integrity and variety"
+  video_assessment:
+    - "Unique, timed video questions"
+    - "AI grading of speech clarity"
+    - "AI grading of content quality"
+    - "Presence metrics evaluation"
+
+workflow_stages:
+  stage_1:
+    name: "Internship Feed"
+    description: "AI-Personalized Opportunity Feed"
+  stage_2:
+    name: "Application Scoring"
+    description: "Automated Application Scoring - AI classifies candidates"
+  stage_3:
+    name: "Psychomotor Tests"
+    description: "Pass Only - Dynamic timing and response tracking"
+  stage_4:
+    name: "Situational Analysis"
+    description: "Pass Only - Dynamically generated questions, NLP-based evaluation"
+  stage_5:
+    name: "Mentorship or CV Routing"
+    description: "Fair candidates -> Mentorship booking; Fail candidates -> CV Revamp Guidance with AI tips"
+  stage_6:
+    name: "Video Interview"
+    description: "Final Stage - Unique timed video questions with AI grading"
+  stage_7:
+    name: "Employer Handoff"
+    description: "Employer Dashboard - Fully evaluated applicants with breakdowns"
+
+stakeholders:
+  students:
+    description: "Undergraduate students to mid-career specialists in global health"
+    needs:
+      - "Verified internship opportunities"
+      - "Personalized matching"
+      - "Actionable career guidance"
+      - "Mentorship access"
+  employers:
+    description: "Global health organizations, institutions, agencies"
+    needs:
+      - "Pre-qualified candidates"
+      - "Reduced hiring time"
+      - "Cultural fit and skills alignment"
+      - "Structured assessment data"
+  mentors:
+    description: "Industry experts, senior professionals"
+    needs:
+      - "Platform to share expertise"
+      - "Income generation"
+      - "Professional network expansion"
+      - "Legacy building"
+  institutions:
+    description: "Universities, professional associations, government bodies"
+    examples:
+      - "WHO, UNICEF, MSF, PATH, GAVI"
+      - "APHA, Royal Society of Tropical Medicine"
+      - "USAID, DFID, GIZ"
+
+revenue_model:
+  subscriptions:
+    description: "Premium services"
+  mentorship:
+    description: "Mentorship programs"
+  cv_services:
+    description: "Premium CV services"
+  success_fees:
+    description: "Placement-based fees"
+  projections:
+    monthly: "$1.98M"
+    annual: "$23.76M"
+
+technical_constraints:
+  latency:
+    - "Reduce AI scoring latency across all stages"
+    - "Optimize internship feed generation"
+  verification:
+    - "Credential verification APIs to validate degree claims"
+    - "Verified internship listings"
+  scalability:
+    - "Lightweight video compression"
+    - "Progress tracking and failover mechanisms"
+    - "Geographic content delivery optimization (CDN for Africa, Asia)"
+    - "Multi-region deployment for latency and compliance"
+  bias_reduction:
+    - "Automated, objective evaluation"
+    - "Reducing human bias in filtering"
+  structured_assessment:
+    - "Multi-stage adaptive evaluation pipeline"
+    - "Progressive 4-staged AI-evaluated workflow"
+    - "Each stage adapts based on prior performance"
+
+key_differentiators:
+  - "AI-Personalized Opportunity Feed"
+  - "Multi-Stage Adaptive Evaluation Pipeline"
+  - "Dynamic Test Generation"
+  - "Mentorship Matching Algorithm"
+  - "Candidate Scoring Transparency"
+
+development_methodology:
+  approach: "Agile Scrum"
+  practices:
+    - "2-week sprints"
+    - "Sprint planning"
+    - "Daily standups"
+    - "Sprint reviews"
+    - "Retrospectives"
+    - "Continuous backlog grooming"
+    - "User-centric, high-impact tasks"
+    - "Rapid iteration cycles"
+    - "Early user testing"
+
+market_metrics:
+  annual_health_graduates: "10M+ (UNESCO)"
+  recruitment_market_2028: "$47.3B"
+  ai_recruitment_market_2029: "$1.99B"
+
+short_term_timeline:
+  timeframe: "3-6 Months"
+  performance_optimization:
+    - "Reduce AI scoring latency across all stages"
+    - "Optimize internship feed generation"
+    - "Improve video infrastructure: lightweight compression, progress tracking, failover mechanisms"
+  feature_enhancements:
+    - "Mentorship booking upgrades"
+    - "AI scoring dashboard for admins to audit scoring"
+  new_integrations:
+    - "OAuth 2.0 for institutional logins (university SSO, LinkedIn for profile import)"
+    - "Credential verification APIs to validate degree claims"
+  technical_debt_resolution:
+    - "Refactor monolith modules in preparation for microservice transition"
+    - "Strengthen DTO validation and request throttling for input sanitization and protection"
+
+long_term_vision:
+  deeper_ai_ml_integration:
+    - "Dynamic skill gap mapping engine"
+    - "AI-powered career path recommendations"
+    - "Mentor matching via AI-driven compatibility"
+  platform_expansion:
+    - "Launch mobile app (iOS/Android) with offline features"
+    - "Build institutional dashboards for universities to track student performance"
+  advanced_assessment_layer:
+    - "Gamified behavioral assessments for evaluation & ethical reasoning"
+    - "Simulated fieldwork task module to mimic global health roles"
+  global_infrastructure_scaling:
+    - "Geographic content delivery optimization (CDN for Africa, Asia)"
+    - "Multi-region deployment for improved latency and compliance"
+  data_analytics_layer:
+    - "Custom analytics for employers"
+    - "Intern dashboards with personal learning analytics and milestone tracking"
+
+resource_needs:
+  infrastructure_tools:
+    - "Dedicated LLM finetuning credits (OpenAI/Anthropic or open-source fallback)"
+    - "Cloud video processing tools (Mux, Cloudflare Stream)"
+    - "Production-grade observability stack (Grafana Cloud, Datadog, or Prometheus + Loki)"
+    - "Institutional SSO license and audit log infrastructure"
+  talent_engineering:
+    - "Senior DevOps Engineer (Sevalla/AWS + CI/CD scaling + microservices orchestration)"
+    - "AI/ML Engineer (NLP focus) for scoring and mentor matchmaking advancement"
+    - "Mobile Developer (React Native or Flutter) for iOS/Android rollout"
+    - "QA Automation Engineer for broader test coverage and regression monitoring"
+
+swot_analysis:
+  strengths:
+    - "Market Leadership in Specialized Niche"
+    - "Advanced AI-Powered Technology Stack"
+    - "Comprehensive Integrated Solution"
+    - "Strong Revenue Model with Multiple Streams"
+    - "Platform Development Progress"
+  weaknesses:
+    - "Unestablished User Base and Market Presence"
+    - "Platform Still in Development Phase"
+    - "Dependency on Conversion Rate Assumptions"
+  opportunities:
+    - "Massive Addressable Market with Growing Demand"
+    - "Strategic Partnership Potential"
+    - "Geographic and Sectoral Expansion"
+    - "Technology Enhancement and Integration"
+    - "Policy and Funding Environment"
+  threats:
+    - "Competitive Entry from Established Platforms"
+    - "Economic Sensitivity of Internship Funding"
+    - "Regulatory and Compliance Challenges"
+    - "Technology and Security Risks"
+    - "University and Employer Direct Solutions"
+    - "Market Saturation and Commoditization"
+
+contact:
+  name: "Glohib.ai"
+  email: "Globalhealthinternshipbank@gmail.com"
