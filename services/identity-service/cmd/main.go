@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"log"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -14,7 +15,6 @@ import (
 	loggerPkg "github.com/glohib/identity-service/internal/logger"
 	"github.com/glohib/identity-service/internal/redis"
 	"github.com/glohib/identity-service/internal/router"
-	"github.com/glohib/identity-service/internal/server"
 	"go.uber.org/zap"
 )
 
@@ -43,13 +43,10 @@ func main() {
 	oauthHandler := handlers.NewOAuthHandler(database, rdb, jwtHelper, cfg)
 	apiKeyHandler := handlers.NewAPIKeyHandler(database)
 
-	r := router.New(authHandler, oauthHandler, apiKeyHandler, jwtHelper)
+	r := router.New(authHandler, oauthHandler, apiKeyHandler, jwtHelper, rdb)
 
-	go func() {
-		if err := server.StartGRPC(cfg, database, jwtHelper); err != nil {
-			loggerPkg.Fatal("start grpc", zap.Error(err))
-		}
-	}()
+	// gRPC server disabled — proto Go code not yet generated
+	// Re-enable after running: protoc --go_out=. --go-grpc_out=. pkg/proto/identity.proto
 
 	srv := &http.Server{Addr: ":" + cfg.Server.Port, Handler: r}
 

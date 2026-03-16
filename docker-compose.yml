@@ -1,11 +1,15 @@
-version: "3.9"
-
 x-common-variables: &common-variables
   POSTGRES_USER: ${POSTGRES_USER:-glohib}
   POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
   POSTGRES_DB: ${POSTGRES_DB:-glohib_db}
   POSTGRES_HOST: postgres
   POSTGRES_PORT: 5432
+  DATABASE_HOST: postgres
+  DATABASE_PORT: 5432
+  DATABASE_USER: glohib
+  DATABASE_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+  DATABASE_DB: glohib_db
+  DATABASE_SSLMODE: disable
   REDIS_URL: redis://redis:6379
   REDIS_HOST: redis
   REDIS_PORT: 6379
@@ -69,7 +73,7 @@ services:
       - "${MINIO_CONSOLE_PORT:-9001}:9001"
     command: server /data --console-address ":9001"
     healthcheck:
-      test: ["CMD", "mc", "ready", "local"]
+      test: ["CMD-SHELL", "curl -f http://127.0.0.1:9000/minio/health/live || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -86,6 +90,19 @@ services:
       dockerfile: Dockerfile
     container_name: glohib-identity-service
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     environment:
       <<: *common-variables
       JWT_SECRET: ${JWT_SECRET:-super-secret-change-me}
@@ -99,8 +116,10 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      migrations:
+        condition: service_completed_successfully
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/health"]
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://localhost:8080/health"]
       interval: 15s
       timeout: 5s
       retries: 5
@@ -118,6 +137,19 @@ services:
       dockerfile: Dockerfile
     container_name: glohib-student-service
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     environment:
       <<: *common-variables
     ports:
@@ -127,10 +159,12 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      migrations:
+        condition: service_completed_successfully
       identity-service:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8082/health"]
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://localhost:8082/health"]
       interval: 15s
       timeout: 5s
       retries: 5
@@ -148,6 +182,19 @@ services:
       dockerfile: Dockerfile
     container_name: glohib-internship-service
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     environment:
       <<: *common-variables
     ports:
@@ -157,8 +204,10 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      migrations:
+        condition: service_completed_successfully
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8083/health"]
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://localhost:8083/health"]
       interval: 15s
       timeout: 5s
       retries: 5
@@ -176,6 +225,19 @@ services:
       dockerfile: Dockerfile
     container_name: glohib-assessment-service
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     environment:
       <<: *common-variables
     ports:
@@ -186,8 +248,10 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      migrations:
+        condition: service_completed_successfully
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8084/health"]
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://localhost:8084/health"]
       interval: 15s
       timeout: 5s
       retries: 5
@@ -205,6 +269,19 @@ services:
       dockerfile: Dockerfile
     container_name: glohib-recommendation-service
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     environment:
       <<: *common-variables
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
@@ -215,8 +292,10 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      migrations:
+        condition: service_completed_successfully
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8007/health"]
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://localhost:8007/health"]
       interval: 15s
       timeout: 5s
       retries: 5
@@ -230,8 +309,22 @@ services:
       dockerfile: Dockerfile
     container_name: glohib-scoring-service
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     environment:
       <<: *common-variables
+      METRICS_PORT: ${SCORING_METRICS_PORT:-9091}
     ports:
       - "${SCORING_PORT:-8008}:8008"
     depends_on:
@@ -239,8 +332,10 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      migrations:
+        condition: service_completed_successfully
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8008/health"]
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://localhost:8008/health"]
       interval: 15s
       timeout: 5s
       retries: 5
@@ -258,9 +353,28 @@ services:
       dockerfile: Dockerfile
     container_name: glohib-video-service
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     environment:
       <<: *common-variables
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      TUS_UPLOAD_DIR: ${TUS_UPLOAD_DIR:-/tmp/uploads}
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin}
+      MINIO_USE_SSL: "false"
+      MINIO_BUCKET_VIDEOS: ${MINIO_BUCKET_VIDEOS:-glohib-videos}
+      MINIO_BUCKET_TRANSCRIPTS: ${MINIO_BUCKET_TRANSCRIPTS:-glohib-transcripts}
     ports:
       - "${VIDEO_PORT:-4000}:4000"
     depends_on:
@@ -268,14 +382,94 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      migrations:
+        condition: service_completed_successfully
       minio:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:4000/health"]
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://localhost:4000/health"]
       interval: 15s
       timeout: 5s
       retries: 5
       start_period: 15s
+    networks:
+      - glohib-net
+
+  frontend:
+    build:
+      context: ./frontend/web
+      dockerfile: Dockerfile
+    container_name: glohib-frontend
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    environment:
+      API_IDENTITY: http://identity-service:8080
+      API_STUDENT: http://student-service:8082
+      API_INTERNSHIP: http://internship-service:8083
+      API_RECOMMENDATION: http://recommendation-service:8007
+      API_VIDEO: http://video-service:4000
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    depends_on:
+      identity-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://localhost:3000"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - glohib-net
+
+  minio-init:
+    image: minio/mc:latest
+    container_name: glohib-minio-init
+    restart: "no"
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      mc alias set local http://minio:9000 ${MINIO_ROOT_USER:-minioadmin} ${MINIO_ROOT_PASSWORD:-minioadmin};
+      mc mb --ignore-existing local/${MINIO_BUCKET:-glohib};
+      mc mb --ignore-existing local/${MINIO_BUCKET_VIDEOS:-glohib-videos};
+      exit 0;
+      "
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
+      MINIO_BUCKET: ${MINIO_BUCKET:-glohib}
+      MINIO_BUCKET_VIDEOS: ${MINIO_BUCKET_VIDEOS:-glohib-videos}
+    networks:
+      - glohib-net
+
+  migrations:
+    image: postgres:16-alpine
+    container_name: glohib-migrations
+    restart: "no"
+    environment:
+      <<: *common-variables
+      PGPASSWORD: ${POSTGRES_PASSWORD:-changeme}
+    volumes:
+      - ./database/migrations:/migrations:ro
+      - ./scripts/run-migrations.sh:/run-migrations.sh:ro
+    entrypoint: ["/bin/bash", "/run-migrations.sh"]
+    depends_on:
+      postgres:
+        condition: service_healthy
     networks:
       - glohib-net
 

@@ -34,7 +34,7 @@ func New(internshipHandler *handlers.InternshipHandler) *gin.Engine {
 
 		applications := v1.Group("/applications")
 		{
-			applications.GET("/:studentId/student", internshipHandler.ListStudentApplications)
+			applications.GET("/student/:studentId", internshipHandler.ListStudentApplications)
 			applications.GET("/:appId", internshipHandler.GetApplication)
 			applications.PUT("/:appId", internshipHandler.UpdateApplication)
 		}

@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GlohibAI Forensic Analysis Report - 2026-03-11</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --danger: #dc2626;
+            --warning: #d97706;
+            --success: #16a34a;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            line-height: 1.7;
+            color: var(--text);
+            background: var(--bg);
+            padding: 20px;
+        }
+        .container { max-width: 1400px; margin: 0 auto; }
+        
+        /* Header */
+        header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 40px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        header h1 { font-size: 2.5rem; margin-bottom: 10px; }
+        header .meta { opacity: 0.9; font-size: 0.95rem; }
+        
+        /* Navigation */
+        nav {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            position: sticky;
+            top: 10px;
+            z-index: 100;
+        }
+        nav ul { list-style: none; display: flex; flex-wrap: wrap; gap: 10px; }
+        nav a {
+            color: var(--primary);
+            text-decoration: none;
+            padding: 8px 16px;
+            background: #eff6ff;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        nav a:hover { background: var(--primary); color: white; }
+        
+        /* Cards */
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .card h2 {
+            color: var(--primary);
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+        }
+        .card h3 { color: var(--text); margin: 25px 0 15px 0; font-size: 1.2rem; }
+        .card h4 { color: var(--text-muted); margin: 20px 0 10px 0; font-size: 1rem; }
+        
+        /* Summary Box */
+        .summary-box {
+            background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+            border-left: 4px solid var(--primary);
+            padding: 25px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .summary-box.critical {
+            background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+            border-left-color: var(--danger);
+        }
+        .summary-box.warning {
+            background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+            border-left-color: var(--warning);
+        }
+        .summary-box.success {
+            background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+            border-left-color: var(--success);
+        }
+        
+        /* Score Badge */
+        .score-badge {
+            display: inline-block;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            min-width: 80px;
+            text-align: center;
+        }
+        .score-critical { background: #fef2f2; color: var(--danger); }
+        .score-warning { background: #fffbeb; color: var(--warning); }
+        .score-good { background: #f0fdf4; color: var(--success); }
+        
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 0.95rem;
+        }
+        th, td {
+            border: 1px solid var(--border);
+            padding: 14px;
+            text-align: left;
+        }
+        th {
+            background: #f8fafc;
+            font-weight: 600;
+            color: var(--text);
+        }
+        tr:nth-child(even) { background: #f8fafc; }
+        tr:hover { background: #f1f5f9; }
+        
+        /* Lists */
+        ul, ol { margin: 15px 0; padding-left: 25px; }
+        li { margin: 8px 0; }
+        
+        /* Code */
+        code {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.9em;
+        }
+        pre {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 20px 0;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.9em;
+            line-height: 1.5;
+        }
+        pre code { background: none; padding: 0; }
+        
+        /* Grid */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .grid-item {
+            background: #f8fafc;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+        }
+        .grid-item h4 {
+            margin: 0 0 10px 0;
+            color: var(--primary);
+        }
+        
+        /* Footer */
+        footer {
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 12px;
+            text-align: center;
+            color: var(--text-muted);
+            margin-top: 40px;
+        }
+        
+        /* Print */
+        @media print {
+            body { background: white; padding: 0; }
+            nav { display: none; }
+            .card { box-shadow: none; border: 1px solid #ddd; }
+        }
+        
+        /* Collapsible */
+        .collapsible {
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            margin: 15px 0;
+            overflow: hidden;
+        }
+        .collapsible-header {
+            background: #f8fafc;
+            padding: 15px 20px;
+            cursor: pointer;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .collapsible-header:hover { background: #f1f5f9; }
+        .collapsible-header::after { content: '▼'; font-size: 0.8rem; }
+        .collapsible.open .collapsible-header::after { content: '▲'; }
+        .collapsible-content {
+            padding: 20px;
+            display: none;
+        }
+        .collapsible.open .collapsible-content { display: block; }
+        
+        /* Risk Matrix */
+        .risk-critical { border-left: 4px solid var(--danger); }
+        .risk-high { border-left: 4px solid #ea580c; }
+        .risk-medium { border-left: 4px solid var(--warning); }
+        .risk-low { border-left: 4px solid var(--success); }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔍 GlohibAI Forensic Analysis Report</h1>
+            <div class="meta">
+                <strong>Scan Date:</strong> 2026-03-11 &nbsp;|&nbsp;
+                <strong>Project:</strong> GlohibAI - AI-Powered Global Health Internship Platform &nbsp;|&nbsp;
+                <strong>Scan Version:</strong> 2.0
+            </div>
+        </header>
+
+        <nav>
+            <ul>
+                <li><a href="#executive-summary">Executive Summary</a></li>
+                <li><a href="#scores">Scores</a></li>
+                <li><a href="#critical-findings">Critical Findings</a></li>
+                <li><a href="#repository">Repository</a></li>
+                <li><a href="#architecture">Architecture</a></li>
+                <li><a href="#security">Security</a></li>
+                <li><a href="#testing">Testing</a></li>
+                <li><a href="#devops">DevOps</a></li>
+                <li><a href="#frontend">Frontend</a></li>
+                <li><a href="#recommendations">Recommendations</a></li>
+            </ul>
+        </nav>
+
+        <!-- Executive Summary -->
+        <section id="executive-summary" class="card">
+            <h2>Executive Summary</h2>
+            
+            <div class="summary-box">
+                <h3>Overall System Health Score: <span class="score-badge score-warning">58/100</span></h3>
+                <p><strong>Status:</strong> ⚠️ Needs Work Before Production</p>
+                <p>GlohibAI has a solid microservices architecture with 7 backend services implemented and containerized. However, critical gaps in security, testing, DevOps, and operations prevent production deployment.</p>
+            </div>
+
+            <div class="summary-box critical">
+                <h3>🔴 Production Readiness: NO-GO</h3>
+                <p><strong>Estimated Time to Production Ready:</strong> 8-12 weeks</p>
+                <p><strong>Minimum Team Required:</strong> 3 engineers + 2 DevOps + 1 QA</p>
+            </div>
+        </section>
+
+        <!-- Scores Overview -->
+        <section id="scores" class="card">
+            <h2>System Scores Overview</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Dimension</th>
+                        <th>Score</th>
+                        <th>Status</th>
+                        <th>Priority</th>
+                        <th>Key Findings</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Backend Services</strong></td>
+                        <td><span class="score-badge score-good">82/100</span></td>
+                        <td>✅ Good</td>
+                        <td>P2</td>
+                        <td>All 7 services functional, well-documented</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Documentation</strong></td>
+                        <td><span class="score-badge score-good">75/100</span></td>
+                        <td>✅ Good</td>
+                        <td>P2</td>
+                        <td>Comprehensive README files, needs runbooks</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Frontend</strong></td>
+                        <td><span class="score-badge score-warning">70/100</span></td>
+                        <td>⚠️ Fair</td>
+                        <td>P2</td>
+                        <td>Core features work, assessment/video UI missing</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Dependency Health</strong></td>
+                        <td><span class="score-badge score-warning">70/100</span></td>
+                        <td>⚠️ Fair</td>
+                        <td>P2</td>
+                        <td>Current versions, no security scanning</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Docker/Containers</strong></td>
+                        <td><span class="score-badge score-warning">70/100</span></td>
+                        <td>⚠️ Fair</td>
+                        <td>P1</td>
+                        <td>All containerized, security hardening needed</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Architecture</strong></td>
+                        <td><span class="score-badge score-warning">65/100</span></td>
+                        <td>⚠️ Fair</td>
+                        <td>P1</td>
+                        <td>Good service boundaries, shared DB anti-pattern</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Repository Structure</strong></td>
+                        <td><span class="score-badge score-warning">65/100</span></td>
+                        <td>⚠️ Fair</td>
+                        <td>P2</td>
+                        <td>Duplicate service directories, minimal git history</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Security</strong></td>
+                        <td><span class="score-badge score-critical">50/100</span></td>
+                        <td>🔴 Critical</td>
+                        <td>P0</td>
+                        <td>No rate limiting, containers as root, no TLS</td>
+                    </tr>
+                    <tr>
+                        <td><strong>DevOps</strong></td>
+                        <td><span class="score-badge score-critical">45/100</span></td>
+                        <td>🔴 Critical</td>
+                        <td>P0</td>
+                        <td>No CI/CD, no monitoring, no backups</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Operations</strong></td>
+                        <td><span class="score-badge score-critical">45/100</span></td>
+                        <td>🔴 Critical</td>
+                        <td>P0</td>
+                        <td>No observability, no DR plan</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Feature Completeness</strong></td>
+                        <td><span class="score-badge score-critical">55/100</span></td>
+                        <td>🔴 Critical</td>
+                        <td>P1</td>
+                        <td>Backend complete, frontend gaps</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Test Coverage</strong></td>
+                        <td><span class="score-badge score-critical">35/100</span></td>
+                        <td>🔴 Critical</td>
+                        <td>P0</td>
+                        <td>0% unit tests, E2E tests only</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Deployment Readiness</strong></td>
+                        <td><span class="score-badge score-critical">45/100</span></td>
+                        <td>🔴 Critical</td>
+                        <td>P0</td>
+                        <td>Development ready, not production</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Mobile Responsiveness</strong></td>
+                        <td><span class="score-badge score-critical">55/100</span></td>
+                        <td>🔴 Critical</td>
+                        <td>P1</td>
+                        <td>No mobile navigation, touch targets small</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- Critical Findings -->
+        <section id="critical-findings" class="card">
+            <h2>🔴 Critical Findings (P0 - Fix Immediately)</h2>
+            
+            <div class="summary-box critical">
+                <h3>1. Security Vulnerabilities</h3>
+                <ul>
+                    <li><strong>No rate limiting</strong> on authentication endpoints - brute force attacks possible</li>
+                    <li><strong>Containers running as root</strong> - privilege escalation risk</li>
+                    <li><strong>No TLS/SSL configuration</strong> - all traffic unencrypted</li>
+                    <li><strong>Default secrets</strong> may still be in use</li>
+                </ul>
+                <p><strong>Remediation:</strong> 4-8 hours</p>
+            </div>
+
+            <div class="summary-box critical">
+                <h3>2. No Test Coverage</h3>
+                <ul>
+                    <li><strong>0% unit test coverage</strong> across all 7 backend services</li>
+                    <li><strong>0% integration test coverage</strong></li>
+                    <li><strong>No CI/CD quality gates</strong></li>
+                    <li>E2E tests exist but require full environment</li>
+                </ul>
+                <p><strong>Remediation:</strong> 4-6 weeks</p>
+            </div>
+
+            <div class="summary-box critical">
+                <h3>3. No Backup Strategy</h3>
+                <ul>
+                    <li><strong>PostgreSQL:</strong> No automated backups</li>
+                    <li><strong>Redis:</strong> No persistence configured</li>
+                    <li><strong>MinIO:</strong> No replication</li>
+                    <li><strong>No backup verification</strong> or restore testing</li>
+                </ul>
+                <p><strong>Remediation:</strong> 1-2 weeks</p>
+            </div>
+
+            <div class="summary-box critical">
+                <h3>4. No CI/CD Pipeline</h3>
+                <ul>
+                    <li><strong>Manual deployments only</strong></li>
+                    <li><strong>No automated testing</strong></li>
+                    <li><strong>No security scanning</strong> (SAST/DAST/SCA)</li>
+                    <li><strong>No automated deployment</strong></li>
+                </ul>
+                <p><strong>Remediation:</strong> 1-2 weeks</p>
+            </div>
+
+            <div class="summary-box critical">
+                <h3>5. No Monitoring</h3>
+                <ul>
+                    <li><strong>No Prometheus/Grafana</strong></li>
+                    <li><strong>No alerting</strong> configured</li>
+                    <li><strong>No distributed tracing</strong></li>
+                    <li><strong>No centralized logging</strong></li>
+                </ul>
+                <p><strong>Remediation:</strong> 1-2 weeks</p>
+            </div>
+        </section>
+
+        <!-- Repository Analysis -->
+        <section id="repository" class="card">
+            <h2>Repository Analysis</h2>
+            
+            <h3>Git Repository Status</h3>
+            <table>
+                <tr><th>Property</th><th>Value</th><th>Status</th></tr>
+                <tr><td>Current Branch</td><td>master</td><td>⚠️ Single branch</td></tr>
+                <tr><td>Total Commits</td><td>1 (Initial commit)</td><td>🔴 No history</td></tr>
+                <tr><td>Remote Configured</td><td>No</td><td>🔴 Local only</td></tr>
+                <tr><td>Tags</td><td>None</td><td>🔴 No releases</td></tr>
+            </table>
+
+            <h3>Critical Finding: Duplicate Service Directories</h3>
+            <div class="summary-box warning">
+                <p>The repository contains TWO parallel service directory structures:</p>
+                <ul>
+                    <li><code>/services/</code> - Hyphen-named directories (primary)</li>
+                    <li><code>/backend/services/</code> - Underscore-named directories (alternative)</li>
+                </ul>
+                <p><strong>Recommendation:</strong> Consolidate to single directory structure</p>
+            </div>
+
+            <h3>File Statistics</h3>
+            <div class="grid">
+                <div class="grid-item">
+                    <h4>Python Files</h4>
+                    <p><strong>~80 files</strong><br>Backend services, ML pipelines</p>
+                </div>
+                <div class="grid-item">
+                    <h4>TypeScript Files</h4>
+                    <p><strong>~3,800+ files</strong><br>Frontend (includes node_modules)</p>
+                </div>
+                <div class="grid-item">
+                    <h4>Go Files</h4>
+                    <p><strong>~50 files</strong><br>Backend microservices</p>
+                </div>
+                <div class="grid-item">
+                    <h4>Dockerfiles</h4>
+                    <p><strong>16+ files</strong><br>Service containerization</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Architecture -->
+        <section id="architecture" class="card">
+            <h2>Architecture Analysis</h2>
+            
+            <h3>Service Inventory</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Service</th>
+                        <th>Language</th>
+                        <th>Framework</th>
+                        <th>Port(s)</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>Identity</td><td>Go 1.22</td><td>Gin + gRPC</td><td>8080, 50051</td><td>✅ Complete</td></tr>
+                    <tr><td>Student</td><td>Go 1.22</td><td>Gin</td><td>8082</td><td>✅ Complete</td></tr>
+                    <tr><td>Internship</td><td>Go 1.22</td><td>Gin</td><td>8083</td><td>✅ Complete</td></tr>
+                    <tr><td>Assessment</td><td>Go 1.22</td><td>Gin + gRPC</td><td>8084, 50054</td><td>✅ Complete</td></tr>
+                    <tr><td>Recommendation</td><td>Python 3.11</td><td>FastAPI</td><td>8007</td><td>✅ Complete</td></tr>
+                    <tr><td>Scoring</td><td>Python 3.11</td><td>FastAPI</td><td>8008</td><td>✅ Complete</td></tr>
+                    <tr><td>Video</td><td>Node.js 20</td><td>Express</td><td>4000</td><td>✅ Complete</td></tr>
+                </tbody>
+            </table>
+
+            <h3>Infrastructure Components</h3>
+            <div class="grid">
+                <div class="grid-item">
+                    <h4>PostgreSQL + pgvector</h4>
+                    <p>Primary data store with vector search capabilities</p>
+                </div>
+                <div class="grid-item">
+                    <h4>Redis 7</h4>
+                    <p>Session management and caching layer</p>
+                </div>
+                <div class="grid-item">
+                    <h4>MinIO</h4>
+                    <p>S3-compatible object storage for videos/assets</p>
+                </div>
+                <div class="grid-item">
+                    <h4>RabbitMQ</h4>
+                    <p>Message queue (configured but unused)</p>
+                </div>
+            </div>
+
+            <h3>Architecture Anti-Patterns</h3>
+            <div class="summary-box warning">
+                <ol>
+                    <li><strong>Shared Database:</strong> All services share single PostgreSQL instance (no database-per-service)</li>
+                    <li><strong>No API Gateway:</strong> Frontend directly calls individual services</li>
+                    <li><strong>Tight Coupling:</strong> Services depend on each other's health</li>
+                    <li><strong>No Circuit Breaker:</strong> Cascading failures possible</li>
+                    <li><strong>No Event Bus:</strong> RabbitMQ configured but not used</li>
+                </ol>
+            </div>
+        </section>
+
+        <!-- Security -->
+        <section id="security" class="card">
+            <h2>Security Analysis</h2>
+            
+            <h3>Authentication Security</h3>
+            <table>
+                <tr><th>Aspect</th><th>Status</th><th>Notes</th></tr>
+                <tr>
+                    <td>JWT Implementation</td>
+                    <td><span class="score-badge score-warning">⚠️ Partial</span></td>
+                    <td>HS256, no token blacklist, no rotation</td>
+                </tr>
+                <tr>
+                    <td>Password Security</td>
+                    <td><span class="score-badge score-good">✅ Good</span></td>
+                    <td>bcrypt with salt</td>
+                </tr>
+                <tr>
+                    <td>OAuth2 (Google)</td>
+                    <td><span class="score-badge score-good">✅ Configured</span></td>
+                    <td>OAuth flow implemented</td>
+                </tr>
+                <tr>
+                    <td>Rate Limiting</td>
+                    <td><span class="score-badge score-critical">❌ Missing</span></td>
+                    <td>Only on scoring service</td>
+                </tr>
+            </table>
+
+            <h3>Container Security</h3>
+            <div class="summary-box critical">
+                <ul>
+                    <li><strong>❌ Most containers running as root</strong></li>
+                    <li><strong>❌ No security context configured</strong></li>
+                    <li><strong>❌ No capabilities dropped</strong></li>
+                    <li><strong>❌ No read-only filesystems</strong></li>
+                    <li><strong>❌ No image scanning</strong></li>
+                </ul>
+            </div>
+
+            <h3>Security Vulnerabilities Summary</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Vulnerability</th>
+                        <th>Severity</th>
+                        <th>Remediation</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="risk-critical">
+                        <td>SEC-001</td>
+                        <td>No Rate Limiting on Auth</td>
+                        <td>🔴 Critical</td>
+                        <td>Implement rate limiting immediately</td>
+                    </tr>
+                    <tr class="risk-critical">
+                        <td>SEC-002</td>
+                        <td>Containers Running as Root</td>
+                        <td>🔴 Critical</td>
+                        <td>Add USER directive to Dockerfiles</td>
+                    </tr>
+                    <tr class="risk-critical">
+                        <td>SEC-003</td>
+                        <td>No TLS/SSL Configuration</td>
+                        <td>🔴 Critical</td>
+                        <td>Enable HTTPS with valid certificates</td>
+                    </tr>
+                    <tr class="risk-high">
+                        <td>SEC-004</td>
+                        <td>No JWT Token Blacklist</td>
+                        <td>🟡 High</td>
+                        <td>Implement Redis-based blacklist</td>
+                    </tr>
+                    <tr class="risk-high">
+                        <td>SEC-005</td>
+                        <td>No Security Headers</td>
+                        <td>🟡 High</td>
+                        <td>Add CSP, X-Frame-Options</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- Testing -->
+        <section id="testing" class="card">
+            <h2>Testing Analysis</h2>
+            
+            <div class="summary-box critical">
+                <h3>Test Coverage Summary</h3>
+                <table>
+                    <tr><th>Category</th><th>Coverage</th><th>Target</th><th>Gap</th></tr>
+                    <tr>
+                        <td>Unit Tests</td>
+                        <td><strong>0%</strong></td>
+                        <td>80%</td>
+                        <td><span class="score-badge score-critical">-80%</span></td>
+                    </tr>
+                    <tr>
+                        <td>Integration Tests</td>
+                        <td><strong>0%</strong></td>
+                        <td>80%</td>
+                        <td><span class="score-badge score-critical">-80%</span></td>
+                    </tr>
+                    <tr>
+                        <td>E2E Tests</td>
+                        <td><strong>10 scenarios</strong></td>
+                        <td>20 scenarios</td>
+                        <td><span class="score-badge score-warning">-50%</span></td>
+                    </tr>
+                    <tr>
+                        <td>API Tests</td>
+                        <td><strong>0%</strong></td>
+                        <td>80%</td>
+                        <td><span class="score-badge score-critical">-80%</span></td>
+                    </tr>
+                </table>
+            </div>
+
+            <h3>E2E Test Coverage (Frontend)</h3>
+            <p><strong>Framework:</strong> Playwright 1.58 | <strong>Total Tests:</strong> 10 | <strong>Status:</strong> ✅ Comprehensive</p>
+            <table>
+                <tr><th>Test Suite</th><th>Tests</th><th>Status</th></tr>
+                <tr><td>Homepage UX</td><td>1</td><td>✅ Complete</td></tr>
+                <tr><td>Login Page</td><td>1</td><td>✅ Complete</td></tr>
+                <tr><td>Register Page</td><td>1</td><td>✅ Complete</td></tr>
+                <tr><td>Internships Page</td><td>1</td><td>✅ Complete</td></tr>
+                <tr><td>Profile Page</td><td>1</td><td>✅ Complete</td></tr>
+                <tr><td>Layout Tests</td><td>5</td><td>✅ Complete</td></tr>
+            </table>
+
+            <h3>Backend Unit Tests</h3>
+            <div class="summary-box critical">
+                <p><strong>Total Unit Tests Found: 0</strong></p>
+                <p>No unit tests exist for any of the 7 backend services. This represents a critical quality gap.</p>
+            </div>
+        </section>
+
+        <!-- DevOps -->
+        <section id="devops" class="card">
+            <h2>DevOps Analysis</h2>
+            
+            <h3>Docker Configuration</h3>
+            <table>
+                <tr><th>Aspect</th><th>Status</th><th>Notes</th></tr>
+                <tr><td>Containerization</td><td>✅ Complete</td><td>All 7 services containerized</td></tr>
+                <tr><td>Health Checks</td><td>✅ Complete</td><td>All services have health endpoints</td></tr>
+                <tr><td>Resource Limits</td><td>⚠️ Partial</td><td>Go services only</td></tr>
+                <tr><td>Logging Config</td><td>⚠️ Partial</td><td>Go services only</td></tr>
+                <tr><td>Security Hardening</td><td>❌ Missing</td><td>Running as root</td></tr>
+            </table>
+
+            <h3>CI/CD Pipeline</h3>
+            <div class="summary-box critical">
+                <p><strong>Status: ❌ NOT CONFIGURED</strong></p>
+                <ul>
+                    <li>❌ No GitHub Actions workflows</li>
+                    <li>❌ No GitLab CI</li>
+                    <li>❌ No Jenkins</li>
+                    <li>❌ No automated builds</li>
+                    <li>❌ No automated testing</li>
+                    <li>❌ No security scanning</li>
+                </ul>
+            </div>
+
+            <h3>Backup Strategy</h3>
+            <div class="summary-box critical">
+                <p><strong>Status: ❌ NO BACKUP STRATEGY</strong></p>
+                <table>
+                    <tr><th>Component</th><th>Backup Method</th><th>Status</th></tr>
+                    <tr><td>PostgreSQL</td><td>❌ None</td><td>🔴 Critical</td></tr>
+                    <tr><td>Redis</td><td>❌ None</td><td>🔴 Critical</td></tr>
+                    <tr><td>MinIO</td><td>❌ None</td><td>🔴 Critical</td></tr>
+                    <tr><td>ML Models</td><td>❌ None</td><td>🔴 Critical</td></tr>
+                </table>
+            </div>
+        </section>
+
+        <!-- Frontend -->
+        <section id="frontend" class="card">
+            <h2>Frontend Analysis</h2>
+            
+            <h3>Technology Stack</h3>
+            <table>
+                <tr><th>Technology</th><th>Version</th><th>Purpose</th></tr>
+                <tr><td>Next.js</td><td>14.2.3</td><td>React framework</td></tr>
+                <tr><td>TypeScript</td><td>5.4.5</td><td>Type safety</td></tr>
+                <tr><td>Tailwind CSS</td><td>3.4.3</td><td>Styling</td></tr>
+                <tr><td>Zustand</td><td>4.5.2</td><td>State management</td></tr>
+                <tr><td>React Query</td><td>5.35.1</td><td>Data fetching</td></tr>
+            </table>
+
+            <h3>Implemented Pages</h3>
+            <div class="grid">
+                <div class="grid-item">
+                    <h4>✅ Homepage</h4>
+                    <p>Hero, Stats, Features, Footer</p>
+                </div>
+                <div class="grid-item">
+                    <h4>✅ Login</h4>
+                    <p>Email/password, OAuth</p>
+                </div>
+                <div class="grid-item">
+                    <h4>✅ Register</h4>
+                    <p>Multi-role registration</p>
+                </div>
+                <div class="grid-item">
+                    <h4>✅ Dashboard</h4>
+                    <p>Student overview</p>
+                </div>
+                <div class="grid-item">
+                    <h4>✅ Internships</h4>
+                    <p>Browse, search, filter</p>
+                </div>
+                <div class="grid-item">
+                    <h4>✅ Profile</h4>
+                    <p>Edit student profile</p>
+                </div>
+            </div>
+
+            <h3>Missing Pages</h3>
+            <div class="summary-box warning">
+                <ul>
+                    <li><strong>❌ Assessment UI</strong> - Assessment flow incomplete</li>
+                    <li><strong>❌ Video Interview UI</strong> - Recording interface missing</li>
+                    <li><strong>❌ Employer Dashboard</strong> - Not implemented</li>
+                    <li><strong>❌ Settings Page</strong> - Not implemented</li>
+                    <li><strong>❌ Admin Panel</strong> - Not implemented</li>
+                    <li><strong>❌ Mobile Navigation</strong> - No hamburger menu</li>
+                </ul>
+            </div>
+
+            <h3>Mobile Responsiveness</h3>
+            <div class="summary-box warning">
+                <p><strong>Score: 55/100</strong> - Needs Improvement</p>
+                <ul>
+                    <li>❌ No mobile menu toggle</li>
+                    <li>❌ Touch targets too small (&lt;44px)</li>
+                    <li>❌ Navigation overflows on small screens</li>
+                    <li>⚠️ Forms not optimized for mobile</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Recommendations -->
+        <section id="recommendations" class="card">
+            <h2>Remediation Roadmap</h2>
+            
+            <h3>Phase 1: Critical Security Fixes (Week 1-2)</h3>
+            <div class="summary-box critical">
+                <table>
+                    <tr><th>Task</th><th>Effort</th><th>Exit Criteria</th></tr>
+                    <tr><td>Rotate all secrets</td><td>2h</td><td>All default passwords changed</td></tr>
+                    <tr><td>Add rate limiting to auth</td><td>4h</td><td>5 req/min on login/register</td></tr>
+                    <tr><td>Fix container security</td><td>4h</td><td>All containers run as non-root</td></tr>
+                    <tr><td>Enable TLS/SSL</td><td>4h</td><td>HTTPS working with valid cert</td></tr>
+                </table>
+            </div>
+
+            <h3>Phase 2: Backup & Recovery (Week 2)</h3>
+            <div class="summary-box warning">
+                <table>
+                    <tr><th>Task</th><th>Effort</th><th>Exit Criteria</th></tr>
+                    <tr><td>PostgreSQL backup script</td><td>4h</td><td>Daily automated backups</td></tr>
+                    <tr><td>Redis persistence config</td><td>2h</td><td>RDB snapshots every 15min</td></tr>
+                    <tr><td>Backup verification</td><td>4h</td><td>Restore test successful</td></tr>
+                </table>
+            </div>
+
+            <h3>Phase 3: Testing Infrastructure (Week 3-6)</h3>
+            <div class="summary-box warning">
+                <table>
+                    <tr><th>Task</th><th>Effort</th><th>Exit Criteria</th></tr>
+                    <tr><td>Unit tests - all services</td><td>50h</td><td>80% coverage</td></tr>
+                    <tr><td>Integration tests</td><td>16h</td><td>API contracts tested</td></tr>
+                    <tr><td>CI/CD pipeline</td><td>16h</td><td>Automated builds/tests</td></tr>
+                </table>
+            </div>
+
+            <h3>Phase 4: Observability (Week 5-6)</h3>
+            <div class="summary-box">
+                <table>
+                    <tr><th>Task</th><th>Effort</th><th>Exit Criteria</th></tr>
+                    <tr><td>Deploy Prometheus + Grafana</td><td>8h</td><td>Metrics collection working</td></tr>
+                    <tr><td>Configure alerting</td><td>8h</td><td>Alerts firing correctly</td></tr>
+                    <tr><td>Deploy Loki for logging</td><td>4h</td><td>Log aggregation working</td></tr>
+                </table>
+            </div>
+
+            <h3>Phase 5: Frontend Completion (Week 7-8)</h3>
+            <div class="summary-box">
+                <table>
+                    <tr><th>Task</th><th>Effort</th><th>Exit Criteria</th></tr>
+                    <tr><td>Assessment UI</td><td>16h</td><td>Full assessment flow working</td></tr>
+                    <tr><td>Video Interview UI</td><td>12h</td><td>Recording/upload working</td></tr>
+                    <tr><td>Employer Dashboard</td><td>24h</td><td>Employer features complete</td></tr>
+                    <tr><td>Mobile Navigation</td><td>4h</td><td>Hamburger menu working</td></tr>
+                </table>
+            </div>
+
+            <h3>Effort Summary</h3>
+            <div class="summary-box">
+                <table>
+                    <tr><th>Phase</th><th>Duration</th><th>Total Effort</th><th>Resources</th></tr>
+                    <tr><td>Phase 1: Security</td><td>1 week</td><td>16 hours</td><td>2 engineers</td></tr>
+                    <tr><td>Phase 2: Backup</td><td>1 week</td><td>18 hours</td><td>1 DevOps</td></tr>
+                    <tr><td>Phase 3: Testing</td><td>2 weeks</td><td>76 hours</td><td>3 engineers</td></tr>
+                    <tr><td>Phase 4: Observability</td><td>2 weeks</td><td>40 hours</td><td>2 DevOps</td></tr>
+                    <tr><td>Phase 5: Frontend</td><td>2 weeks</td><td>66 hours</td><td>2 frontend</td></tr>
+                    <tr><td><strong>Total</strong></td><td><strong>8 weeks</strong></td><td><strong>216 hours</strong></td><td><strong>3 engineers + 2 DevOps</strong></td></tr>
+                </table>
+            </div>
+        </section>
+
+        <!-- Go/No-Go -->
+        <section class="card">
+            <h2>Go/No-Go Recommendation</h2>
+            
+            <div class="summary-box critical">
+                <h3>🔴 NO-GO for Production</h3>
+                <p><strong>Current Status:</strong> Not Production Ready</p>
+                <p><strong>Estimated Time to Production Ready:</strong> 8-12 weeks</p>
+            </div>
+
+            <h3>Conditions for Production Approval</h3>
+            <p>All of the following must be completed:</p>
+            <ul>
+                <li>✅ <strong>Security:</strong> All P0 security issues resolved</li>
+                <li>✅ <strong>Backups:</strong> Automated backups configured and tested</li>
+                <li>✅ <strong>Testing:</strong> &gt;80% code coverage achieved</li>
+                <li>✅ <strong>CI/CD:</strong> Automated pipeline with security scanning</li>
+                <li>✅ <strong>Monitoring:</strong> Full observability stack operational</li>
+                <li>✅ <strong>Documentation:</strong> Runbooks and procedures documented</li>
+            </ul>
+        </section>
+
+        <footer>
+            <p><strong>Forensic Scan Completed:</strong> 2026-03-11</p>
+            <p><strong>Next Scan Recommended:</strong> 2026-06-11 (Post-Remediation)</p>
+            <p><strong>Scan Version:</strong> 2.0</p>
+            <p style="margin-top: 20px;"><em>This report is confidential and intended for GlohibAI leadership and authorized stakeholders only.</em></p>
+        </footer>
+    </div>
+
+    <script>
+        // Add collapsible functionality
+        document.querySelectorAll('.collapsible-header').forEach(header => {
+            header.addEventListener('click', () => {
+                const collapsible = header.parentElement;
+                collapsible.classList.toggle('open');
+            });
+        });
+
+        // Smooth scroll for navigation
+        document.querySelectorAll('nav a').forEach(anchor => {
+            anchor.addEventListener('click', (e) => {
+                e.preventDefault();
+                const targetId = anchor.getAttribute('href').substring(1);
+                const target = document.getElementById(targetId);
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        });
+    </script>
+</body>
+</html>

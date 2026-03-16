@@ -45,7 +45,7 @@ func (s *StateMachineService) Transition(ctx context.Context, id uuid.UUID, even
 	if !sm.Can(event) {
 		return fmt.Errorf("invalid transition")
 	}
-	if err := sm.Event(event); err != nil {
+	if err := sm.Event(ctx, event); err != nil {
 		return err
 	}
 	return s.repo.UpdateState(ctx, id, sm.Current())

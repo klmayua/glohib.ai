@@ -1,0 +1,641 @@
+# ================================================================================
+# GLOHIB.AI — DEPLOYMENT-READY FIX LIST (TINY STEPS)
+# ================================================================================
+# Date:       2026-03-15
+# For:        Qwen / OpenCode
+# Goal:       Make `docker compose up --build` succeed and demo-ready
+# Rule:       ONE command per step. NO compound commands. NO skipping.
+# ================================================================================
+#
+# STATUS SUMMARY:
+#   Code:     90% built — 7 services, frontend, 8 DB migrations, all real code
+#   Blockers: 13 issues preventing successful Docker build/run
+#   Estimate: ~45 minutes of sequential fixes
+#
+# SERVICES:
+#   identity-service     Go 1.22    port 8080   ✅ code complete
+#   student-service      Go 1.22    port 8082   ✅ code complete
+#   internship-service   Go 1.23    port 8083   ✅ code complete
+#   assessment-service   Go 1.22    port 8084   ✅ code complete
+#   recommendation-svc   Python     port 8007   ✅ code complete
+#   scoring-service      Python     port 8008   ✅ code complete
+#   video-service        Node 20    port 4000   ✅ code complete
+#   frontend/web         Next.js    port 3000   ✅ code complete (NOT in compose)
+#   postgres             pgvector   port 5432   ✅ image ready
+#   redis                7-alpine   port 6379   ✅ image ready
+#   minio                latest     port 9000   ✅ image ready
+# ================================================================================
+
+fixes:
+
+  # ==========================================================================
+  # BLOCK A: IDENTITY SERVICE — CORRUPTED go.sum (CRITICAL)
+  # ==========================================================================
+  # The go.sum file contains Docker pull output (garbage), not checksums.
+  # `go mod download` in the Dockerfile will fail.
+  # The Dockerfile also only copies go.mod, not go.sum.
+  # ==========================================================================
+
+  - id: A1
+    what: "Delete the corrupted go.sum file"
+    why: "Contains Docker pull output instead of Go checksums (5 lines of garbage)"
+    dir: "services/identity-service"
+    command: "rm go.sum"
+
+  - id: A2
+    what: "Generate a valid go.sum from go.mod"
+    why: "go mod tidy downloads all dependencies and writes correct checksums"
+    dir: "services/identity-service"
+    command: "go mod tidy"
+
+  - id: A3
+    what: "Verify the new go.sum has real content"
+    why: "Should have 100+ lines of h1: checksums, not Docker pull messages"
+    dir: "services/identity-service"
+    command: "wc -l go.sum"
+    expect: ">100 lines"
+
+  # ==========================================================================
+  # BLOCK B: ALL GO DOCKERFILES — MISSING go.sum IN COPY (CRITICAL)
+  # ==========================================================================
+  # Every Go Dockerfile does `COPY go.mod ./` then `RUN go mod download`.
+  # But `go mod download` requires go.sum to exist.
+  # Without it, Docker build fails at the download step.
+  # Fix: change `COPY go.mod ./` to `COPY go.mod go.sum ./` in each.
+  # ==========================================================================
+
+  - id: B1
+    what: "Fix identity-service Dockerfile to copy go.sum"
+    why: "go mod download requires go.sum to verify checksums"
+    file: "services/identity-service/Dockerfile"
+    find: "COPY go.mod ./"
+    replace: "COPY go.mod go.sum ./"
+
+  - id: B2
+    what: "Fix student-service Dockerfile to copy go.sum"
+    why: "Same issue — go mod download needs go.sum"
+    file: "services/student-service/Dockerfile"
+    find: "COPY go.mod ./"
+    replace: "COPY go.mod go.sum ./"
+
+  - id: B3
+    what: "Fix internship-service Dockerfile to copy go.sum"
+    why: "Same issue"
+    file: "services/internship-service/Dockerfile"
+    find: "COPY go.mod ./"
+    replace: "COPY go.mod go.sum ./"
+
+  - id: B4
+    what: "Fix assessment-service Dockerfile to copy go.sum"
+    why: "Same issue"
+    file: "services/assessment-service/Dockerfile"
+    find: "COPY go.mod ./"
+    replace: "COPY go.mod go.sum ./"
+
+  # ==========================================================================
+  # BLOCK C: INTERNSHIP SERVICE — GO VERSION MISMATCH (CRITICAL)
+  # ==========================================================================
+  # go.mod declares `go 1.23.0` but Dockerfile uses `golang:1.22-alpine`.
+  # Go 1.22 cannot build a module that requires 1.23.
+  # Fix: update Dockerfile to use golang:1.23-alpine.
+  # ==========================================================================
+
+  - id: C1
+    what: "Update internship-service Dockerfile Go version to 1.23"
+    why: "go.mod requires go 1.23.0 but Dockerfile uses golang:1.22-alpine"
+    file: "services/internship-service/Dockerfile"
+    find: "FROM golang:1.22-alpine AS builder"
+    replace: "FROM golang:1.23-alpine AS builder"
+
+  # ==========================================================================
+  # BLOCK D: VIDEO SERVICE — MISSING package-lock.json (CRITICAL)
+  # ==========================================================================
+  # Dockerfile line 14: `npm install --frozen-lockfile` requires package-lock.json.
+  # The fallback `|| npm install` works but is non-deterministic.
+  # Fix: generate the lock file so builds are reproducible.
+  # ==========================================================================
+
+  - id: D1
+    what: "Generate package-lock.json for video-service"
+    why: "Dockerfile uses --frozen-lockfile which requires package-lock.json"
+    dir: "services/video-service"
+    command: "npm install --package-lock-only"
+
+  - id: D2
+    what: "Verify package-lock.json was created"
+    why: "Confirm the file exists before Docker build"
+    dir: "services/video-service"
+    command: "ls -la package-lock.json"
+    expect: "File exists with size > 0"
+
+  # ==========================================================================
+  # BLOCK E: FRONTEND NOT IN DOCKER-COMPOSE (HIGH)
+  # ==========================================================================
+  # The frontend has a Dockerfile and real code but docker-compose.yml
+  # does NOT include it. For a demo, the frontend must be built and served.
+  # Fix: add frontend service to docker-compose.yml.
+  # ==========================================================================
+
+  - id: E1
+    what: "Add frontend service to docker-compose.yml"
+    why: "Frontend exists with Dockerfile but is not in the compose file — no UI for demo"
+    file: "docker-compose.yml"
+    action: "insert_before_volumes"
+    insert: |
+        frontend:
+          build:
+            context: ./frontend/web
+            dockerfile: Dockerfile
+          container_name: glohib-frontend
+          restart: unless-stopped
+          deploy:
+            resources:
+              limits:
+                cpus: '0.5'
+                memory: 512M
+              reservations:
+                cpus: '0.25'
+                memory: 256M
+          logging:
+            driver: json-file
+            options:
+              max-size: "10m"
+              max-file: "3"
+          environment:
+            API_IDENTITY: http://identity-service:8080
+            API_STUDENT: http://student-service:8082
+            API_INTERNSHIP: http://internship-service:8083
+            API_RECOMMENDATION: http://recommendation-service:8007
+            API_VIDEO: http://video-service:4000
+          ports:
+            - "${FRONTEND_PORT:-3000}:3000"
+          depends_on:
+            identity-service:
+              condition: service_healthy
+          healthcheck:
+            test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000"]
+            interval: 15s
+            timeout: 5s
+            retries: 5
+            start_period: 30s
+          networks:
+            - glohib-net
+
+  # ==========================================================================
+  # BLOCK F: FRONTEND API URLs — HARDCODED localhost (HIGH)
+  # ==========================================================================
+  # next.config.js and lib/api.ts default to http://localhost:PORT.
+  # Inside Docker, services are reached by container hostname, not localhost.
+  # The next.config.js already reads env vars, but the defaults are wrong
+  # for Docker. The compose env block (E1) fixes this at runtime.
+  # However, Next.js bakes env vars at BUILD TIME for client-side code.
+  # Fix: add NEXT_PUBLIC_ prefixed vars so the browser can reach the API
+  # through the host machine's exposed ports.
+  # ==========================================================================
+
+  - id: F1
+    what: "Add NEXT_PUBLIC_API_URL to frontend next.config.js"
+    why: "Client-side axios calls need to reach APIs through browser, not Docker network"
+    file: "frontend/web/next.config.js"
+    find: |
+      env: {
+        API_IDENTITY: process.env.API_IDENTITY || 'http://localhost:8080',
+        API_INTERNSHIP: process.env.API_INTERNSHIP || 'http://localhost:8083',
+        API_RECOMMENDATION: process.env.API_RECOMMENDATION || 'http://localhost:8007',
+        API_VIDEO: process.env.API_VIDEO || 'http://localhost:4000',
+      },
+    replace: |
+      env: {
+        API_IDENTITY: process.env.NEXT_PUBLIC_API_IDENTITY || process.env.API_IDENTITY || 'http://localhost:8080',
+        API_STUDENT: process.env.NEXT_PUBLIC_API_STUDENT || process.env.API_STUDENT || 'http://localhost:8082',
+        API_INTERNSHIP: process.env.NEXT_PUBLIC_API_INTERNSHIP || process.env.API_INTERNSHIP || 'http://localhost:8083',
+        API_RECOMMENDATION: process.env.NEXT_PUBLIC_API_RECOMMENDATION || process.env.API_RECOMMENDATION || 'http://localhost:8007',
+        API_VIDEO: process.env.NEXT_PUBLIC_API_VIDEO || process.env.API_VIDEO || 'http://localhost:4000',
+      },
+    note: >
+      For demo on a single machine, the defaults (localhost:PORT) are correct
+      for browser-side calls since Docker maps those ports to the host.
+      The server-side calls use the Docker hostnames set in compose env.
+
+  # ==========================================================================
+  # BLOCK G: DATABASE MIGRATIONS NOT AUTO-RUN (HIGH)
+  # ==========================================================================
+  # 8 migration files exist in database/migrations/ but nothing in
+  # docker-compose.yml runs them. Postgres starts empty except for
+  # init_postgres.sql (extensions + schemas only, no tables).
+  # Services will crash trying to query non-existent tables.
+  # Fix: mount migrations and run them on startup.
+  # ==========================================================================
+
+  - id: G1
+    what: "Create a migration runner script"
+    why: "No mechanism exists to apply the 8 SQL migrations to the database"
+    file: "scripts/run-migrations.sh"
+    create: |
+      #!/bin/bash
+      set -e
+      echo "Waiting for PostgreSQL..."
+      until pg_isready -h "${POSTGRES_HOST:-postgres}" -U "${POSTGRES_USER:-glohib}" -q; do
+        sleep 1
+      done
+      echo "PostgreSQL is ready. Running migrations..."
+      for f in /migrations/*.sql; do
+        echo "Applying: $f"
+        psql -h "${POSTGRES_HOST:-postgres}" -U "${POSTGRES_USER:-glohib}" -d "${POSTGRES_DB:-glohib_db}" -f "$f"
+      done
+      echo "All migrations applied."
+
+  - id: G2
+    what: "Make the migration script executable"
+    dir: "."
+    command: "chmod +x scripts/run-migrations.sh"
+
+  - id: G3
+    what: "Add migration runner service to docker-compose.yml"
+    why: "Runs the 8 SQL migration files against postgres before services start"
+    file: "docker-compose.yml"
+    action: "insert_after_minio_service"
+    insert: |
+        migrations:
+          image: postgres:16-alpine
+          container_name: glohib-migrations
+          restart: "no"
+          environment:
+            <<: *common-variables
+            PGPASSWORD: ${POSTGRES_PASSWORD:-changeme}
+          volumes:
+            - ./database/migrations:/migrations:ro
+            - ./scripts/run-migrations.sh:/run-migrations.sh:ro
+          entrypoint: ["/bin/bash", "/run-migrations.sh"]
+          depends_on:
+            postgres:
+              condition: service_healthy
+          networks:
+            - glohib-net
+
+  - id: G4
+    what: "Add migrations as dependency for identity-service"
+    why: "Services must wait for tables to exist before starting"
+    file: "docker-compose.yml"
+    action: "add to identity-service depends_on"
+    add: |
+          migrations:
+            condition: service_completed_successfully
+
+  - id: G5
+    what: "Add migrations as dependency for student-service"
+    file: "docker-compose.yml"
+    action: "add to student-service depends_on"
+    add: |
+          migrations:
+            condition: service_completed_successfully
+
+  - id: G6
+    what: "Add migrations as dependency for internship-service"
+    file: "docker-compose.yml"
+    action: "add to internship-service depends_on"
+    add: |
+          migrations:
+            condition: service_completed_successfully
+
+  - id: G7
+    what: "Add migrations as dependency for assessment-service"
+    file: "docker-compose.yml"
+    action: "add to assessment-service depends_on"
+    add: |
+          migrations:
+            condition: service_completed_successfully
+
+  - id: G8
+    what: "Add migrations as dependency for recommendation-service"
+    file: "docker-compose.yml"
+    action: "add to recommendation-service depends_on"
+    add: |
+          migrations:
+            condition: service_completed_successfully
+
+  - id: G9
+    what: "Add migrations as dependency for scoring-service"
+    file: "docker-compose.yml"
+    action: "add to scoring-service depends_on"
+    add: |
+          migrations:
+            condition: service_completed_successfully
+
+  - id: G10
+    what: "Add migrations as dependency for video-service"
+    file: "docker-compose.yml"
+    action: "add to video-service depends_on"
+    add: |
+          migrations:
+            condition: service_completed_successfully
+
+  # ==========================================================================
+  # BLOCK H: .env FILE FOR DOCKER (MEDIUM)
+  # ==========================================================================
+  # .env exists but docker-compose should explicitly use it.
+  # .env.docker has proper secrets. Ensure compose picks it up.
+  # ==========================================================================
+
+  - id: H1
+    what: "Copy .env.docker to .env if .env has weaker values"
+    why: ".env.docker has generated secrets; .env may have placeholder values"
+    dir: "."
+    command: "cp .env.docker .env"
+    note: "Only do this if .env has placeholder passwords. Skip if .env already has real secrets."
+
+  # ==========================================================================
+  # BLOCK I: MINIO BUCKET AUTO-CREATION (MEDIUM)
+  # ==========================================================================
+  # MinIO starts empty. Video service expects a bucket named 'glohib'.
+  # No init container creates it. Video service will fail on first upload.
+  # ==========================================================================
+
+  - id: I1
+    what: "Add MinIO init container to docker-compose.yml"
+    why: "Creates the 'glohib' bucket that video-service expects"
+    file: "docker-compose.yml"
+    action: "insert_after_minio_service"
+    insert: |
+        minio-init:
+          image: minio/mc:latest
+          container_name: glohib-minio-init
+          restart: "no"
+          depends_on:
+            minio:
+              condition: service_healthy
+          entrypoint: >
+            /bin/sh -c "
+            mc alias set local http://minio:9000 $${MINIO_ROOT_USER:-minioadmin} $${MINIO_ROOT_PASSWORD:-minioadmin};
+            mc mb --ignore-existing local/$${MINIO_BUCKET:-glohib};
+            mc mb --ignore-existing local/$${MINIO_BUCKET_VIDEOS:-glohib-videos};
+            exit 0;
+            "
+          environment:
+            MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+            MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
+            MINIO_BUCKET: ${MINIO_BUCKET:-glohib}
+            MINIO_BUCKET_VIDEOS: ${MINIO_BUCKET_VIDEOS:-glohib-videos}
+          networks:
+            - glohib-net
+
+  # ==========================================================================
+  # BLOCK J: CLEANUP — REMOVE DEAD DIRECTORIES (LOW)
+  # ==========================================================================
+  # 9 empty -svc stub directories and junk files add confusion and
+  # bloat the Docker build context (slowing down builds).
+  # ==========================================================================
+
+  - id: J1
+    what: "Remove empty identity-svc stub directory"
+    dir: "services"
+    command: "rm -rf identity-svc"
+
+  - id: J2
+    what: "Remove empty student-svc stub directory"
+    dir: "services"
+    command: "rm -rf student-svc"
+
+  - id: J3
+    what: "Remove empty internship-svc stub directory"
+    dir: "services"
+    command: "rm -rf internship-svc"
+
+  - id: J4
+    what: "Remove empty assessment-svc stub directory"
+    dir: "services"
+    command: "rm -rf assessment-svc"
+
+  - id: J5
+    what: "Remove empty recommendation-svc stub directory"
+    dir: "services"
+    command: "rm -rf recommendation-svc"
+
+  - id: J6
+    what: "Remove empty scoring-svc stub directory"
+    dir: "services"
+    command: "rm -rf scoring-svc"
+
+  - id: J7
+    what: "Remove empty video-svc stub directory"
+    dir: "services"
+    command: "rm -rf video-svc"
+
+  - id: J8
+    what: "Remove empty mentor-svc stub directory"
+    dir: "services"
+    command: "rm -rf mentor-svc"
+
+  - id: J9
+    what: "Remove empty analytics-svc stub directory"
+    dir: "services"
+    command: "rm -rf analytics-svc"
+
+  - id: J10
+    what: "Remove root $null junk file"
+    dir: "."
+    command: 'rm -f "$null"'
+
+  - id: J11
+    what: "Remove root -p junk directory"
+    dir: "."
+    command: 'rm -rf "./-p"'
+
+  - id: J12
+    what: "Remove deprecated root Dockerfile"
+    dir: "."
+    command: "rm -f Dockerfile.deprecated"
+
+  # ==========================================================================
+  # BLOCK K: ADD .dockerignore FILES (LOW)
+  # ==========================================================================
+  # Without .dockerignore, Docker copies node_modules, .git, logs, etc.
+  # into the build context. This slows builds and can break them.
+  # ==========================================================================
+
+  - id: K1
+    what: "Create .dockerignore at project root"
+    file: ".dockerignore"
+    create: |
+      .git
+      .github
+      node_modules
+      logs
+      docs
+      forensics
+      extracted_intelligence
+      source_docs
+      system_context
+      planning_output
+      kimi_*
+      *.md
+      *.pptx.txt
+      .env
+      .env.*
+      docker-compose*.yml
+      Makefile
+
+  - id: K2
+    what: "Create .dockerignore for frontend/web"
+    file: "frontend/web/.dockerignore"
+    create: |
+      node_modules
+      .next
+      test-results
+      playwright-report
+      TestResults
+      .env*
+
+  - id: K3
+    what: "Create .dockerignore for video-service"
+    file: "services/video-service/.dockerignore"
+    create: |
+      node_modules
+      dist
+      .env*
+
+# ================================================================================
+# DEPLOYMENT SEQUENCE (after all fixes applied)
+# ================================================================================
+
+deploy:
+
+  step_01:
+    what: "Verify Docker is running"
+    command: "docker info"
+    expect: "Shows Docker engine info without errors"
+
+  step_02:
+    what: "Navigate to project root"
+    command: "cd C:/Users/UCHE/my-qwen-project/PROJECTS/GlohibAI"
+
+  step_03:
+    what: "Ensure .env file is in place"
+    command: "ls .env"
+    expect: "File exists"
+
+  step_04:
+    what: "Build all Docker images (first time — takes 5-15 min)"
+    command: "docker compose build"
+    expect: "All 11 images built successfully"
+    note: "Go services take longest due to dependency download"
+
+  step_05:
+    what: "Start infrastructure services only"
+    command: "docker compose up -d postgres redis minio"
+    expect: "3 containers started"
+
+  step_06:
+    what: "Wait for infrastructure health checks to pass"
+    command: "docker compose ps"
+    expect: "postgres, redis, minio all show (healthy)"
+    wait: "30 seconds"
+
+  step_07:
+    what: "Start the MinIO bucket initializer"
+    command: "docker compose up -d minio-init"
+    expect: "Creates glohib and glohib-videos buckets"
+
+  step_08:
+    what: "Run database migrations"
+    command: "docker compose up migrations"
+    expect: "Applies 8 SQL files and exits with code 0"
+    note: "This runs in foreground so you see the output"
+
+  step_09:
+    what: "Start all application services"
+    command: "docker compose up -d identity-service student-service internship-service assessment-service"
+    expect: "4 Go services started"
+
+  step_10:
+    what: "Start AI services (may take longer — downloads ML models)"
+    command: "docker compose up -d recommendation-service scoring-service"
+    expect: "2 Python services started"
+    note: "recommendation-service downloads sentence-transformers model on first boot (~100MB)"
+
+  step_11:
+    what: "Start video service"
+    command: "docker compose up -d video-service"
+    expect: "Node.js service started"
+
+  step_12:
+    what: "Start frontend"
+    command: "docker compose up -d frontend"
+    expect: "Next.js frontend started on port 3000"
+
+  step_13:
+    what: "Check all services are healthy"
+    command: "docker compose ps"
+    expect: "All services show (healthy) status"
+
+  step_14:
+    what: "Test identity service health endpoint"
+    command: "curl http://localhost:8080/health"
+    expect: '{"status":"ok"} or similar'
+
+  step_15:
+    what: "Test student service health endpoint"
+    command: "curl http://localhost:8082/health"
+    expect: '{"status":"ok"}'
+
+  step_16:
+    what: "Test internship service health endpoint"
+    command: "curl http://localhost:8083/health"
+    expect: '{"status":"ok"}'
+
+  step_17:
+    what: "Test assessment service health endpoint"
+    command: "curl http://localhost:8084/health"
+    expect: '{"status":"ok"}'
+
+  step_18:
+    what: "Test recommendation service health endpoint"
+    command: "curl http://localhost:8007/health"
+    expect: '{"status":"healthy"}'
+
+  step_19:
+    what: "Test scoring service health endpoint"
+    command: "curl http://localhost:8008/health"
+    expect: '{"status":"ok"}'
+
+  step_20:
+    what: "Test video service health endpoint"
+    command: "curl http://localhost:4000/health"
+    expect: '{"status":"ok"}'
+
+  step_21:
+    what: "Open frontend in browser"
+    command: "Open http://localhost:3000 in browser"
+    expect: "GlohibAI landing page loads"
+
+  step_22:
+    what: "Verify MinIO console is accessible"
+    command: "Open http://localhost:9001 in browser"
+    expect: "MinIO login page (use minioadmin/minioadmin or .env credentials)"
+
+# ================================================================================
+# FIX SUMMARY
+# ================================================================================
+
+summary:
+  total_fixes: 37
+  by_severity:
+    critical: 7   # A1-A3, B1-B4 (go.sum), C1 (go version), D1-D2 (video lock)
+    high: 12      # E1 (frontend compose), F1 (API urls), G1-G10 (migrations)
+    medium: 2     # H1 (.env), I1 (minio bucket)
+    low: 16       # J1-J12 (cleanup), K1-K3 (.dockerignore)
+
+  critical_path: |
+    The minimum to get `docker compose up --build` working:
+    A1 → A2 → B1 → B2 → B3 → B4 → C1 → D1 → E1 → G1 → G2 → G3
+    (12 steps, ~15 minutes)
+
+  what_works_after_fixes: |
+    - All 7 backend services build and start in Docker
+    - Frontend builds and serves on port 3000
+    - PostgreSQL with pgvector, Redis, MinIO all healthy
+    - Database tables created via migrations
+    - MinIO buckets auto-created
+    - Health endpoints return 200 on all services
+    - Frontend connects to backend APIs
+    - Ready for live demonstration

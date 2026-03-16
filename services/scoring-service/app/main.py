@@ -6,6 +6,7 @@ import structlog
 from fastapi import FastAPI, HTTPException, status
 from prometheus_client import Counter, Histogram, generate_latest
 from fastapi.responses import PlainTextResponse
+from app.rate_limit import rate_limit_middleware
 from app.models.score import (
     ApplicationScoreRequest,
     ApplicationScoreResponse,
@@ -34,10 +35,19 @@ explainer_counter = Counter("explain_requests_total", "Total explain requests")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    start_metrics_server(METRICS_PORT)
+    # Start metrics server if port available
+    try:
+        start_metrics_server(METRICS_PORT)
+    except OSError as e:
+        logger.warning("metrics_server_failed", error=str(e))
+
     registry = ModelRegistry(MODEL_REG_PATH)
-    await registry.load_model(DEFAULT_VER)
-    logger.info("scoring-service ready")
+    # Try to load model, but don't fail if not found
+    try:
+        await registry.load_model(DEFAULT_VER)
+        logger.info("scoring-service ready", model_version=DEFAULT_VER)
+    except FileNotFoundError:
+        logger.warning("no_model_found", version=DEFAULT_VER, message="Run /api/v1/model/train to create a model")
     yield
     logger.info("scoring-service shutdown")
 
@@ -46,6 +56,8 @@ app = FastAPI(
     version=os.getenv("APP_VERSION", "0.1.0"),
     lifespan=lifespan,
 )
+
+app.middleware("http")(rate_limit_middleware)
 
 registry = ModelRegistry(MODEL_REG_PATH)
 extractor = FeatureExtractor()

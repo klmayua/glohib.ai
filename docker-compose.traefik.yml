@@ -1,0 +1,266 @@
+# Traefik API Gateway Configuration
+# GlohibAI Production API Gateway
+
+version: '3.8'
+
+services:
+  # ===========================================================================
+  # TRAEFIK API GATEWAY
+  # ===========================================================================
+  traefik:
+    image: traefik:v2.10
+    container_name: glohib-traefik
+    restart: unless-stopped
+    command:
+      # Global settings
+      - "--global.checkNewVersion=false"
+      - "--global.sendAnonymousUsage=false"
+      
+      # Entry points
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--entrypoints.web.http.redirections.entryPoint.to=websecure"
+      - "--entrypoints.web.http.redirections.entryPoint.scheme=https"
+      
+      # Providers
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--providers.docker.network=glohib-net"
+      
+      # TLS with Let's Encrypt
+      - "--certificatesresolvers.letsencrypt.acme.tlschallenge=true"
+      - "--certificatesresolvers.letsencrypt.acme.email=${ACME_EMAIL:-admin@glohib.ai}"
+      - "--certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
+      
+      # API dashboard (disable in production or secure it)
+      - "--api.dashboard=true"
+      - "--api.insecure=true"
+      
+      # Logging
+      - "--log.level=INFO"
+      - "--accesslog=true"
+      - "--accesslog.filepath=/logs/traefik-access.log"
+      
+      # Metrics (Prometheus)
+      - "--metrics.prometheus=true"
+      - "--metrics.prometheus.entryPoint=metrics"
+      
+      # Rate limiting middleware
+      - "--entrypoints.metrics.address=:8082"
+    
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"  # Dashboard
+      - "8082:8082"  # Metrics
+    
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - traefik_logs:/logs
+      - traefik_le:/letsencrypt
+    
+    networks:
+      - glohib-net
+    
+    labels:
+      - "traefik.enable=true"
+      
+      # Dashboard
+      - "traefik.http.routers.traefik.rule=Host(`traefik.glohib.ai`)"
+      - "traefik.http.routers.traefik.service=api@internal"
+      - "traefik.http.routers.traefik.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.traefik.middlewares=auth"
+      
+      # Basic auth for dashboard (change credentials!)
+      - "traefik.http.middlewares.auth.basicauth.users=admin:$$apr1$$H6uskkkW$$IgXLP6ewTrSuBkTrqE8wj/"
+      
+      # Rate limiting middleware
+      - "traefik.http.middlewares.rate-limit.ratelimit.burst=100"
+      - "traefik.http.middlewares.rate-limit.ratelimit.average=50"
+      - "traefik.http.middlewares.rate-limit.ratelimit.sourceCriterion.ipStrategy=true"
+      
+      # Security headers
+      - "traefik.http.middlewares.security-headers.headers.stsSeconds=31536000"
+      - "traefik.http.middlewares.security-headers.headers.stsIncludeSubdomains=true"
+      - "traefik.http.middlewares.security-headers.headers.stsPreload=true"
+      - "traefik.http.middlewares.security-headers.headers.frameDeny=true"
+      - "traefik.http.middlewares.security-headers.headers.contentTypeNosniff=true"
+      - "traefik.http.middlewares.security-headers.headers.browserXssFilter=true"
+    
+    healthcheck:
+      test: ["CMD", "traefik", "healthcheck", "--ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ===========================================================================
+  # FRONTEND (Next.js) - Behind Traefik
+  # ===========================================================================
+  frontend:
+    build:
+      context: ./frontend/web
+      dockerfile: Dockerfile
+    container_name: glohib-frontend
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      
+      # Main application
+      - "traefik.http.routers.frontend.rule=Host(`glohib.ai`) || Host(`www.glohib.ai`)"
+      - "traefik.http.routers.frontend.entrypoints=websecure"
+      - "traefik.http.routers.frontend.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.frontend.middlewares=rate-limit,security-headers"
+      
+      # Service definition
+      - "traefik.http.services.frontend.loadbalancer.server.port=3000"
+    
+    networks:
+      - glohib-net
+    
+    depends_on:
+      - traefik
+
+  # ===========================================================================
+  # IDENTITY SERVICE - Behind Traefik
+  # ===========================================================================
+  identity-service:
+    labels:
+      - "traefik.enable=true"
+      
+      # API routes
+      - "traefik.http.routers.identity.rule=Host(`api.glohib.ai`) && PathPrefix(`/api/v1/auth`)"
+      - "traefik.http.routers.identity.entrypoints=websecure"
+      - "traefik.http.routers.identity.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.identity.middlewares=rate-limit,security-headers"
+      
+      # Service definition
+      - "traefik.http.services.identity.loadbalancer.server.port=8080"
+      
+      # Health check
+      - "traefik.http.services.identity.loadbalancer.healthCheck.path=/health"
+      - "traefik.http.services.identity.loadbalancer.healthCheck.interval=15s"
+    
+    networks:
+      - glohib-net
+
+  # ===========================================================================
+  # STUDENT SERVICE
+  # ===========================================================================
+  student-service:
+    labels:
+      - "traefik.enable=true"
+      
+      - "traefik.http.routers.student.rule=Host(`api.glohib.ai`) && PathPrefix(`/api/v1/students`)"
+      - "traefik.http.routers.student.entrypoints=websecure"
+      - "traefik.http.routers.student.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.student.middlewares=rate-limit,security-headers"
+      
+      - "traefik.http.services.student.loadbalancer.server.port=8082"
+      - "traefik.http.services.student.loadbalancer.healthCheck.path=/health"
+      - "traefik.http.services.student.loadbalancer.healthCheck.interval=15s"
+    
+    networks:
+      - glohib-net
+
+  # ===========================================================================
+  # INTERNSHIP SERVICE
+  # ===========================================================================
+  internship-service:
+    labels:
+      - "traefik.enable=true"
+      
+      - "traefik.http.routers.internship.rule=Host(`api.glohib.ai`) && PathPrefix(`/api/v1/internships`)"
+      - "traefik.http.routers.internship.entrypoints=websecure"
+      - "traefik.http.routers.internship.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.internship.middlewares=rate-limit,security-headers"
+      
+      - "traefik.http.services.internship.loadbalancer.server.port=8083"
+      - "traefik.http.services.internship.loadbalancer.healthCheck.path=/health"
+      - "traefik.http.services.internship.loadbalancer.healthCheck.interval=15s"
+    
+    networks:
+      - glohib-net
+
+  # ===========================================================================
+  # ASSESSMENT SERVICE
+  # ===========================================================================
+  assessment-service:
+    labels:
+      - "traefik.enable=true"
+      
+      - "traefik.http.routers.assessment.rule=Host(`api.glohib.ai`) && PathPrefix(`/api/v1/assessments`)"
+      - "traefik.http.routers.assessment.entrypoints=websecure"
+      - "traefik.http.routers.assessment.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.assessment.middlewares=rate-limit,security-headers"
+      
+      - "traefik.http.services.assessment.loadbalancer.server.port=8084"
+      - "traefik.http.services.assessment.loadbalancer.healthCheck.path=/health"
+      - "traefik.http.services.assessment.loadbalancer.healthCheck.interval=15s"
+    
+    networks:
+      - glohib-net
+
+  # ===========================================================================
+  # RECOMMENDATION SERVICE
+  # ===========================================================================
+  recommendation-service:
+    labels:
+      - "traefik.enable=true"
+      
+      - "traefik.http.routers.recommendation.rule=Host(`api.glohib.ai`) && PathPrefix(`/api/v1/recommendations`)"
+      - "traefik.http.routers.recommendation.entrypoints=websecure"
+      - "traefik.http.routers.recommendation.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.recommendation.middlewares=rate-limit,security-headers"
+      
+      - "traefik.http.services.recommendation.loadbalancer.server.port=8007"
+      - "traefik.http.services.recommendation.loadbalancer.healthCheck.path=/health"
+      - "traefik.http.services.recommendation.loadbalancer.healthCheck.interval=30s"
+    
+    networks:
+      - glohib-net
+
+  # ===========================================================================
+  # SCORING SERVICE
+  # ===========================================================================
+  scoring-service:
+    labels:
+      - "traefik.enable=true"
+      
+      - "traefik.http.routers.scoring.rule=Host(`api.glohib.ai`) && PathPrefix(`/api/v1/score`)"
+      - "traefik.http.routers.scoring.entrypoints=websecure"
+      - "traefik.http.routers.scoring.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.scoring.middlewares=rate-limit,security-headers"
+      
+      - "traefik.http.services.scoring.loadbalancer.server.port=8008"
+      - "traefik.http.services.scoring.loadbalancer.healthCheck.path=/health"
+      - "traefik.http.services.scoring.loadbalancer.healthCheck.interval=30s"
+    
+    networks:
+      - glohib-net
+
+  # ===========================================================================
+  # VIDEO SERVICE
+  # ===========================================================================
+  video-service:
+    labels:
+      - "traefik.enable=true"
+      
+      - "traefik.http.routers.video.rule=Host(`api.glohib.ai`) && PathPrefix(`/api/v1/video`)"
+      - "traefik.http.routers.video.entrypoints=websecure"
+      - "traefik.http.routers.video.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.video.middlewares=rate-limit,security-headers"
+      
+      - "traefik.http.services.video.loadbalancer.server.port=4000"
+      - "traefik.http.services.video.loadbalancer.healthCheck.path=/health"
+      - "traefik.http.services.video.loadbalancer.healthCheck.interval=15s"
+    
+    networks:
+      - glohib-net
+
+networks:
+  glohib-net:
+    external: true
+
+volumes:
+  traefik_logs:
+  traefik_le:

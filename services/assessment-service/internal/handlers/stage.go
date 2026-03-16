@@ -83,7 +83,7 @@ func (h *StageHandler) GetResult(c *gin.Context) {
 }
 
 func (h *StageHandler) StartPsychomotor(c *gin.Context) {
-	aid, _ := uuid.Parse(c.Param("id"))
+	_, _ = uuid.Parse(c.Param("id"))
 	sessionID := uuid.New().String()
 	c.JSON(http.StatusOK, gin.H{
 		"session_id": sessionID,
@@ -96,7 +96,7 @@ func (h *StageHandler) StartPsychomotor(c *gin.Context) {
 }
 
 func (h *StageHandler) SubmitPsychomotor(c *gin.Context) {
-	aid, _ := uuid.Parse(c.Param("id"))
+	_, _ = uuid.Parse(c.Param("id"))
 	score := 0.8
 	passed := score >= 0.6
 	c.JSON(http.StatusOK, gin.H{
@@ -106,7 +106,7 @@ func (h *StageHandler) SubmitPsychomotor(c *gin.Context) {
 }
 
 func (h *StageHandler) StartSituational(c *gin.Context) {
-	aid, _ := uuid.Parse(c.Param("id"))
+	_, _ = uuid.Parse(c.Param("id"))
 	c.JSON(http.StatusOK, gin.H{
 		"scenario_id":    "scen_001",
 		"scenario_text":  "You are leading a public health initiative...",
@@ -119,7 +119,7 @@ func (h *StageHandler) StartSituational(c *gin.Context) {
 }
 
 func (h *StageHandler) SubmitSituational(c *gin.Context) {
-	aid, _ := uuid.Parse(c.Param("id"))
+	_, _ = uuid.Parse(c.Param("id"))
 	score := 0.75
 	passed := score >= 0.6
 	c.JSON(http.StatusOK, gin.H{

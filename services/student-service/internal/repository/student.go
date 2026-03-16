@@ -2,7 +2,6 @@ package repository
 
 import (
 	"context"
-	"time"
 
 	"github.com/glohib-ai/student-service/internal/db"
 	"github.com/glohib-ai/student-service/internal/models"

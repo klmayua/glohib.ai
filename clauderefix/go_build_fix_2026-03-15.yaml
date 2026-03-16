@@ -1,0 +1,504 @@
+# =============================================================================
+# GlohibAI — Go Build Fix YAML for Qwen/OpenCode
+# Project: C:/Users/UCHE/my-qwen-project/PROJECTS/GlohibAI
+# Generated: 2026-03-15
+# Focus: ALL Go build blockers preventing docker compose up
+# Rule: ONE task per step. NO compound commands. TINY BITS.
+# =============================================================================
+
+project:
+  name: GlohibAI
+  root: C:/Users/UCHE/my-qwen-project/PROJECTS/GlohibAI
+
+diagnosis:
+  summary: |
+    identity-service has 5 compile/build blockers.
+    assessment-service has 1 blocker (missing /health endpoint).
+    student-service and internship-service are CLEAN — do NOT touch them.
+
+  identity_service_blockers:
+    - "cmd/main.go uses http.Server and http.ErrServerClosed but net/http is NOT imported"
+    - "go.sum has only 11 lines with ONLY go.mod hashes — missing ALL h1: module hashes and ALL transitive dependency hashes"
+    - "go.mod has 11 direct deps but ZERO indirect deps (compare student-service: 6 direct + 46 indirect)"
+    - "internal/middleware/rate_limit.go imports github.com/go-redis/redis/v8 — WRONG package. go.mod has github.com/redis/go-redis/v9"
+    - "internal/server/grpc.go imports pkg/proto/identityv1 but only identity.proto exists — no generated Go code"
+
+  assessment_service_blockers:
+    - "No /health endpoint — Dockerfile HEALTHCHECK hits http://localhost:8084/health but main.go only has /api/v1/assessment/* routes"
+
+# =============================================================================
+# STEP 1 — Fix missing net/http import in identity-service cmd/main.go
+# =============================================================================
+step_1:
+  service: identity-service
+  file: services/identity-service/cmd/main.go
+  action: edit
+  what: "Add net/http to the import block"
+  find: |
+    import (
+    	"context"
+    	"log"
+    	"os"
+    	"os/signal"
+    	"syscall"
+    	"time"
+    	"github.com/glohib/identity-service/internal/config"
+  replace_with: |
+    import (
+    	"context"
+    	"log"
+    	"net/http"
+    	"os"
+    	"os/signal"
+    	"syscall"
+    	"time"
+    	"github.com/glohib/identity-service/internal/config"
+  why: "Line 54 uses http.Server, line 58 uses http.ErrServerClosed — both undefined without net/http"
+  verify: "Search the file for 'http.' — every usage should now resolve"
+
+# =============================================================================
+# STEP 2 — Remove gRPC from identity-service (no generated proto code exists)
+# =============================================================================
+# The pkg/proto/ directory only has identity.proto (source file).
+# There are NO generated .pb.go or _grpc.pb.go files.
+# Generating proto requires protoc + plugins — too complex for today.
+# The HTTP REST API is the primary interface. gRPC can be added back later.
+
+step_2a:
+  service: identity-service
+  file: services/identity-service/cmd/main.go
+  action: edit
+  what: "Remove the server import from the import block"
+  find: |
+    	"github.com/glohib/identity-service/internal/router"
+    	"github.com/glohib/identity-service/internal/server"
+    	"go.uber.org/zap"
+  replace_with: |
+    	"github.com/glohib/identity-service/internal/router"
+    	"go.uber.org/zap"
+  why: "internal/server/grpc.go imports missing proto package — cannot compile"
+
+step_2b:
+  service: identity-service
+  file: services/identity-service/cmd/main.go
+  action: edit
+  what: "Remove the gRPC goroutine that calls server.StartGRPC"
+  find: |
+    	go func() {
+    		if err := server.StartGRPC(cfg, database, jwtHelper); err != nil {
+    			loggerPkg.Fatal("start grpc", zap.Error(err))
+    		}
+    	}()
+  replace_with: |
+    	// gRPC server disabled — proto Go code not yet generated
+    	// Re-enable after running: protoc --go_out=. --go-grpc_out=. pkg/proto/identity.proto
+  why: "server.StartGRPC imports identityv1 which has no generated Go code"
+
+# =============================================================================
+# STEP 3 — Fix wrong redis import in identity-service rate_limit.go
+# =============================================================================
+step_3:
+  service: identity-service
+  file: services/identity-service/internal/middleware/rate_limit.go
+  action: rewrite_file
+  what: "Fix redis import from go-redis/redis/v8 to redis/go-redis/v9 and accept internal redis wrapper"
+  full_new_content: |
+    package middleware
+
+    import (
+    	"net/http"
+    	"sync"
+    	"time"
+
+    	"github.com/gin-gonic/gin"
+    	goredis "github.com/redis/go-redis/v9"
+    )
+
+    // RateLimiter middleware using Redis for distributed rate limiting
+    type RateLimiter struct {
+    	rdb    *goredis.Client
+    	limit  int           // max requests
+    	window time.Duration // time window
+    	mu     sync.RWMutex
+    }
+
+    // NewRateLimiter creates a new rate limiter
+    // Pass rdb.Client (the embedded go-redis client from internal/redis.Client)
+    func NewRateLimiter(rdb *goredis.Client, limit int, window time.Duration) *RateLimiter {
+    	return &RateLimiter{
+    		rdb:    rdb,
+    		limit:  limit,
+    		window: window,
+    	}
+    }
+
+    // Middleware returns the Gin middleware handler
+    func (rl *RateLimiter) Middleware() gin.HandlerFunc {
+    	return func(c *gin.Context) {
+    		clientIP := c.ClientIP()
+    		key := "rate_limit:" + clientIP
+
+    		rl.mu.RLock()
+    		current, err := rl.rdb.Get(c.Request.Context(), key).Int()
+    		rl.mu.RUnlock()
+
+    		if err == goredis.Nil {
+    			// Key doesn't exist, create it
+    			rl.mu.Lock()
+    			rl.rdb.Set(c.Request.Context(), key, 1, rl.window)
+    			rl.mu.Unlock()
+    			c.Next()
+    			return
+    		} else if err != nil {
+    			// Redis error, allow request but log
+    			c.Next()
+    			return
+    		}
+
+    		if current >= rl.limit {
+    			c.AbortWithStatusJSON(http.StatusTooManyRequests, gin.H{
+    				"error":       "rate limit exceeded",
+    				"message":     "Too many requests, please try again later",
+    				"retry_after": rl.window.Seconds(),
+    			})
+    			return
+    		}
+
+    		// Increment counter
+    		rl.mu.Lock()
+    		rl.rdb.Incr(c.Request.Context(), key)
+    		rl.mu.Unlock()
+
+    		c.Next()
+    	}
+    }
+
+    // LocalRateLimiter for in-memory rate limiting (fallback)
+    type LocalRateLimiter struct {
+    	clients map[string]*clientInfo
+    	limit   int
+    	window  time.Duration
+    	mu      sync.RWMutex
+    }
+
+    type clientInfo struct {
+    	count     int
+    	resetTime time.Time
+    }
+
+    // NewLocalRateLimiter creates a local rate limiter
+    func NewLocalRateLimiter(limit int, window time.Duration) *LocalRateLimiter {
+    	rl := &LocalRateLimiter{
+    		clients: make(map[string]*clientInfo),
+    		limit:   limit,
+    		window:  window,
+    	}
+
+    	// Cleanup old entries periodically
+    	go func() {
+    		ticker := time.NewTicker(window)
+    		defer ticker.Stop()
+    		for range ticker.C {
+    			rl.mu.Lock()
+    			now := time.Now()
+    			for ip, info := range rl.clients {
+    				if info.resetTime.Before(now) {
+    					delete(rl.clients, ip)
+    				}
+    			}
+    			rl.mu.Unlock()
+    		}
+    	}()
+
+    	return rl
+    }
+
+    // Middleware returns the Gin middleware handler
+    func (rl *LocalRateLimiter) Middleware() gin.HandlerFunc {
+    	return func(c *gin.Context) {
+    		clientIP := c.ClientIP()
+    		now := time.Now()
+
+    		rl.mu.Lock()
+    		info, exists := rl.clients[clientIP]
+
+    		if !exists || info.resetTime.Before(now) {
+    			rl.clients[clientIP] = &clientInfo{
+    				count:     1,
+    				resetTime: now.Add(rl.window),
+    			}
+    			rl.mu.Unlock()
+    			c.Next()
+    			return
+    		}
+
+    		if info.count >= rl.limit {
+    			rl.mu.Unlock()
+    			c.AbortWithStatusJSON(http.StatusTooManyRequests, gin.H{
+    				"error":       "rate limit exceeded",
+    				"message":     "Too many requests, please try again later",
+    				"retry_after": info.resetTime.Sub(now).Seconds(),
+    			})
+    			return
+    		}
+
+    		info.count++
+    		rl.mu.Unlock()
+    		c.Next()
+    	}
+    }
+  why: |
+    Original imports github.com/go-redis/redis/v8 which:
+    1. Is NOT in go.mod (go.mod has github.com/redis/go-redis/v9)
+    2. Is the OLD abandoned package name (go-redis moved to redis/go-redis)
+    3. Creates a type mismatch — router passes v9 client, this expects v8 client
+    The fix uses github.com/redis/go-redis/v9 directly with alias 'goredis'.
+
+# =============================================================================
+# STEP 4 — Update router.go to pass unwrapped redis client to RateLimiter
+# =============================================================================
+step_4:
+  service: identity-service
+  file: services/identity-service/internal/router/router.go
+  action: edit
+  what: "Unwrap internal redis.Client to pass the embedded go-redis v9 client to NewRateLimiter"
+  find: |
+    	// Rate limiting: 100 requests per minute for auth endpoints
+    	rateLimiter := middleware.NewRateLimiter(rdb, 100, time.Minute)
+  replace_with: |
+    	// Rate limiting: 100 requests per minute for auth endpoints
+    	rateLimiter := middleware.NewRateLimiter(rdb.Client, 100, time.Minute)
+  why: |
+    After step 3, NewRateLimiter expects *goredis.Client (go-redis v9).
+    rdb is *redis.Client (internal wrapper) which embeds *goredis.Client.
+    rdb.Client accesses the embedded go-redis v9 client.
+
+# =============================================================================
+# STEP 5 — Remove google.golang.org/grpc from identity-service go.mod
+# =============================================================================
+step_5:
+  service: identity-service
+  file: services/identity-service/go.mod
+  action: edit
+  what: "Remove grpc dependency since gRPC is disabled"
+  find: |
+    	golang.org/x/oauth2 v0.15.0
+    	google.golang.org/grpc v1.60.1
+    )
+  replace_with: |
+    	golang.org/x/oauth2 v0.15.0
+    )
+  why: "grpc is only used by internal/server/grpc.go which we disabled in step 2"
+
+# =============================================================================
+# STEP 6 — Delete identity-service go.sum (it is BROKEN)
+# =============================================================================
+step_6:
+  service: identity-service
+  file: services/identity-service/go.sum
+  action: delete
+  what: "Delete the broken go.sum file"
+  why: |
+    go.sum has only 11 lines, all with /go.mod h1: hashes only.
+    Missing: h1: module download hashes for ALL 11 direct deps.
+    Missing: ALL transitive dependency hashes (should be ~150+ lines).
+    Compare to student-service (191 lines) or assessment-service (151 lines).
+    This CANNOT be patched — it must be regenerated by go mod tidy.
+
+# =============================================================================
+# STEP 7 — Regenerate identity-service go.sum + add indirect deps
+# =============================================================================
+# User may not have Go installed locally. Use Docker to run go mod tidy.
+step_7:
+  service: identity-service
+  action: run_command
+  what: "Run go mod tidy inside a Docker container to regenerate go.sum and add indirect deps to go.mod"
+  command: |
+    docker run --rm -v "C:/Users/UCHE/my-qwen-project/PROJECTS/GlohibAI/services/identity-service:/app" -w /app golang:1.22-alpine sh -c "apk add --no-cache git && go mod tidy"
+  why: |
+    go mod tidy will:
+    1. Add ALL missing indirect dependencies to go.mod
+    2. Regenerate go.sum with proper h1: hashes for all direct + transitive deps
+    3. Remove unused dependencies (like grpc which we removed in step 5)
+  expected_result: |
+    go.mod will grow from 17 lines to ~55+ lines (indirect deps added)
+    go.sum will grow from 11 lines to ~150+ lines (proper hashes)
+  note: |
+    If Docker is too slow or not available, you can also install Go 1.22 locally and run:
+      cd C:/Users/UCHE/my-qwen-project/PROJECTS/GlohibAI/services/identity-service
+      go mod tidy
+    Either way works. The Docker approach doesn't require local Go install.
+
+# =============================================================================
+# STEP 8 — Add /health endpoint to assessment-service
+# =============================================================================
+step_8:
+  service: assessment-service
+  file: services/assessment-service/cmd/main.go
+  action: edit
+  what: "Add /health endpoint before the API routes"
+  find: |
+    	api := g.Group("/api/v1/assessment")
+  replace_with: |
+    	// Health check endpoint
+    	g.GET("/health", func(c *gin.Context) {
+    		c.JSON(200, gin.H{"status": "ok", "service": "assessment-service"})
+    	})
+
+    	api := g.Group("/api/v1/assessment")
+  why: |
+    Dockerfile HEALTHCHECK runs: wget -q --spider http://localhost:8084/health
+    docker-compose.yml healthcheck: wget --tries=1 --spider http://localhost:8084/health
+    But main.go has NO /health route — only /api/v1/assessment/* routes.
+    Container will start, serve requests, but Docker marks it as unhealthy.
+    All services depending on assessment-service will never start.
+
+# =============================================================================
+# STEP 9 — Remove EXPOSE 50051 from identity-service Dockerfile
+# =============================================================================
+step_9:
+  service: identity-service
+  file: services/identity-service/Dockerfile
+  action: edit
+  what: "Remove gRPC port from EXPOSE since gRPC is disabled"
+  find: "EXPOSE 8080 50051"
+  replace_with: "EXPOSE 8080"
+  why: "gRPC disabled in step 2 — no need to expose port 50051"
+
+# =============================================================================
+# STEP 10 — Verify the build (ONE service at a time)
+# =============================================================================
+step_10a:
+  service: identity-service
+  action: run_command
+  what: "Build identity-service Docker image"
+  command: |
+    cd C:/Users/UCHE/my-qwen-project/PROJECTS/GlohibAI && docker compose build identity-service
+  expected_result: "Image builds successfully — go build compiles without errors"
+  if_error: |
+    If 'go mod download' fails: Step 7 (go mod tidy) didn't run or failed. Re-run step 7.
+    If 'go build' fails with import errors: Check which import fails and trace it back.
+
+step_10b:
+  service: student-service
+  action: run_command
+  what: "Build student-service Docker image"
+  command: |
+    cd C:/Users/UCHE/my-qwen-project/PROJECTS/GlohibAI && docker compose build student-service
+  expected_result: "Image builds successfully — student-service was already clean"
+
+step_10c:
+  service: internship-service
+  action: run_command
+  what: "Build internship-service Docker image"
+  command: |
+    cd C:/Users/UCHE/my-qwen-project/PROJECTS/GlohibAI && docker compose build internship-service
+  expected_result: "Image builds successfully — internship-service was already clean"
+
+step_10d:
+  service: assessment-service
+  action: run_command
+  what: "Build assessment-service Docker image"
+  command: |
+    cd C:/Users/UCHE/my-qwen-project/PROJECTS/GlohibAI && docker compose build assessment-service
+  expected_result: "Image builds successfully — /health endpoint added"
+
+# =============================================================================
+# STEP 11 — Start infrastructure and verify
+# =============================================================================
+step_11a:
+  action: run_command
+  what: "Start just the infrastructure services first"
+  command: |
+    cd C:/Users/UCHE/my-qwen-project/PROJECTS/GlohibAI && docker compose up -d postgres redis minio
+  expected_result: "postgres, redis, minio start and become healthy"
+
+step_11b:
+  action: run_command
+  what: "Wait for infrastructure health and run migrations + minio init"
+  command: |
+    cd C:/Users/UCHE/my-qwen-project/PROJECTS/GlohibAI && docker compose up -d migrations minio-init
+  expected_result: "migrations complete, minio buckets created"
+
+# =============================================================================
+# STEP 12 — Start Go services one at a time
+# =============================================================================
+step_12a:
+  action: run_command
+  what: "Start identity-service first (other services depend on it)"
+  command: |
+    cd C:/Users/UCHE/my-qwen-project/PROJECTS/GlohibAI && docker compose up -d identity-service
+  expected_result: "identity-service starts, /health returns 200"
+  verify_command: |
+    docker logs glohib-identity-service --tail 20
+
+step_12b:
+  action: run_command
+  what: "Start student-service"
+  command: |
+    cd C:/Users/UCHE/my-qwen-project/PROJECTS/GlohibAI && docker compose up -d student-service
+  expected_result: "student-service starts, /health returns 200"
+
+step_12c:
+  action: run_command
+  what: "Start internship-service"
+  command: |
+    cd C:/Users/UCHE/my-qwen-project/PROJECTS/GlohibAI && docker compose up -d internship-service
+  expected_result: "internship-service starts, /health returns 200"
+
+step_12d:
+  action: run_command
+  what: "Start assessment-service"
+  command: |
+    cd C:/Users/UCHE/my-qwen-project/PROJECTS/GlohibAI && docker compose up -d assessment-service
+  expected_result: "assessment-service starts, /health returns 200"
+
+# =============================================================================
+# NOTES FOR QWEN
+# =============================================================================
+notes:
+  - "DO NOT touch student-service or internship-service source code — they are CLEAN"
+  - "Steps 1-9 are CODE FIXES — do them ALL before any docker build"
+  - "Step 7 (go mod tidy) is the most critical — it regenerates the entire dependency graph"
+  - "If step 7 fails in Docker, install Go 1.22 and run 'go mod tidy' locally"
+  - "The gRPC server is DISABLED — the proto .pb.go files need to be generated later with protoc"
+  - "After all Go services are healthy, proceed with Python services and frontend from deploy_steps_2026-03-15_v2.yaml"
+  - "identity-service docker-compose.yml still maps port 50051 — that's fine, it just won't be used"
+
+# =============================================================================
+# STATUS: ALL CODE FIXES ALREADY APPLIED BY CLAUDE
+# =============================================================================
+# Claude has already applied steps 1-9 directly. Qwen only needs to run
+# the build/deploy steps (10-12). Here is what was done:
+#
+# APPLIED:
+#   Step 1:  Added "net/http" import to identity-service/cmd/main.go
+#   Step 2a: Removed "server" import from main.go
+#   Step 2b: Replaced gRPC goroutine with comment
+#   Step 3:  Rewrote rate_limit.go — go-redis/v8 → redis/go-redis/v9
+#   Step 4:  Changed router.go — rdb → rdb.Client in NewRateLimiter call
+#   Step 5:  Removed google.golang.org/grpc from go.mod
+#   Step 6:  Deleted broken go.sum (was 11 lines)
+#   Step 7:  Ran go mod tidy via Docker (--network host)
+#            go.mod: 17 → 75 lines (54 indirect deps added)
+#            go.sum: 11 → 186 lines (proper hashes)
+#   Step 8:  Added /health endpoint to assessment-service/cmd/main.go
+#   Step 9:  Changed Dockerfile EXPOSE 8080 50051 → EXPOSE 8080
+#   Extra:   Renamed internal/server/grpc.go → grpc.go.disabled
+#            (go mod tidy scans ALL .go files, so the broken import had to be hidden)
+#
+# QWEN: Just run steps 10a-12d to build and deploy.
+
+files_modified:
+  - services/identity-service/cmd/main.go          # Steps 1, 2a, 2b
+  - services/identity-service/internal/middleware/rate_limit.go  # Step 3
+  - services/identity-service/internal/router/router.go         # Step 4
+  - services/identity-service/go.mod                # Step 5 + 7 (75 lines now)
+  - services/identity-service/go.sum                # Step 6 (deleted) + 7 (regenerated, 186 lines)
+  - services/identity-service/internal/server/grpc.go.disabled  # Renamed from grpc.go
+  - services/assessment-service/cmd/main.go         # Step 8
+  - services/identity-service/Dockerfile            # Step 9
+
+files_NOT_modified:
+  - services/student-service/**    # CLEAN — no changes needed
+  - services/internship-service/** # CLEAN — no changes needed

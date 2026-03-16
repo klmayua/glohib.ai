@@ -1,4 +1,4 @@
-import { connect, NatsConnection, Options } from 'nats';
+import { connect, NatsConnection, ConnectionOptions } from 'nats';
 import { logger } from '../utils/logger.js';
 
 const NATS_URL = process.env.NATS_URL || 'nats://localhost:4222';
@@ -9,7 +9,7 @@ export async function connectNats(): Promise<NatsConnection> {
   if (nc) return nc;
 
   try {
-    const opts: Partial<Options> = {
+    const opts: Partial<ConnectionOptions> = {
       servers: NATS_URL,
       reconnect: true,
       maxReconnectAttempts: 5,

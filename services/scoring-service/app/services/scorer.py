@@ -17,6 +17,15 @@ class Scorer:
         self.extractor = FeatureExtractor()
 
     async def score(self, req: ApplicationScoreRequest) -> ApplicationScoreResponse:
+        # Check if model is loaded
+        current_ver = await self.registry.current_version()
+        if not current_ver:
+            # Return mock score if no model available
+            return ApplicationScoreResponse(
+                application_id=req.application_id,
+                score=Score(pass_prob=0.75, score=75.0),
+                model_version="untrained",
+            )
         features = await self.extractor.extract(req.student, req.internship)
         X = pd.DataFrame([features])
         pass_prob = self.registry.classifier.predict_proba(X)[:, 1][0]
@@ -25,7 +34,7 @@ class Scorer:
         return ApplicationScoreResponse(
             application_id=req.application_id,
             score=Score(pass_prob=float(pass_prob), score=float(score_val)),
-            model_version=await self.registry.current_version(),
+            model_version=current_ver,
         )
 
     async def score_batch(self, req: BatchScoreRequest) -> BatchScoreResponse:

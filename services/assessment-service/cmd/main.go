@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -50,6 +49,11 @@ func main() {
 
 	g := gin.New()
 	g.Use(gin.Recovery(), gin.Logger())
+
+	// Health check endpoint
+	g.GET("/health", func(c *gin.Context) {
+		c.JSON(200, gin.H{"status": "ok", "service": "assessment-service"})
+	})
 
 	api := g.Group("/api/v1/assessment")
 	{

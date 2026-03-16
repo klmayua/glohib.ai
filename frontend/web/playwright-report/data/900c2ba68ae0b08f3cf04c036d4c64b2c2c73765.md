@@ -1,0 +1,154 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - generic [ref=e5]:
+      - link "Glohib.ai" [ref=e6] [cursor=pointer]:
+        - /url: /dashboard
+        - img [ref=e7]
+        - generic [ref=e10]: Glohib.ai
+      - navigation [ref=e11]:
+        - link "Dashboard" [ref=e12] [cursor=pointer]:
+          - /url: /dashboard
+        - link "Internships" [ref=e13] [cursor=pointer]:
+          - /url: /dashboard/internships
+        - link "Profile" [ref=e14] [cursor=pointer]:
+          - /url: /dashboard/profile
+    - main [ref=e15]:
+      - generic [ref=e16]:
+        - generic [ref=e17]:
+          - generic [ref=e18]:
+            - generic [ref=e20]:
+              - generic [ref=e21]:
+                - heading "Profile Information" [level=3] [ref=e22]
+                - paragraph [ref=e23]: Complete your profile to improve your internship matches
+              - button "Edit Profile" [ref=e25]:
+                - generic [ref=e26]: Edit Profile
+            - generic [ref=e27]:
+              - generic [ref=e28]:
+                - img [ref=e30]
+                - generic [ref=e33]:
+                  - button "Upload Photo" [disabled]:
+                    - generic:
+                      - img
+                      - text: Upload Photo
+                  - paragraph [ref=e34]: JPG, PNG. Max 2MB
+              - generic [ref=e35]:
+                - generic [ref=e36]:
+                  - generic [ref=e37]: First name
+                  - generic [ref=e38]:
+                    - img [ref=e40]
+                    - textbox "First name" [disabled] [ref=e43]
+                - generic [ref=e44]:
+                  - generic [ref=e45]: Last name
+                  - generic [ref=e46]:
+                    - img [ref=e48]
+                    - textbox "Last name" [disabled] [ref=e51]
+              - generic [ref=e52]:
+                - generic [ref=e53]: Email address
+                - generic [ref=e54]:
+                  - img [ref=e56]
+                  - textbox "Email address" [disabled] [ref=e59]
+              - generic [ref=e60]:
+                - generic [ref=e61]:
+                  - generic [ref=e62]: Phone number
+                  - generic [ref=e63]:
+                    - img [ref=e65]
+                    - textbox "Phone number" [disabled] [ref=e67]
+                - generic [ref=e68]:
+                  - generic [ref=e69]: Location
+                  - generic [ref=e70]:
+                    - img [ref=e72]
+                    - textbox "Location" [disabled] [ref=e75]
+              - generic [ref=e76]:
+                - generic [ref=e77]: Bio
+                - textbox "Tell us about yourself, your interests, and career goals..." [disabled] [ref=e78]
+          - generic [ref=e79]:
+            - generic [ref=e82]:
+              - heading "Education" [level=3] [ref=e83]:
+                - img [ref=e84]
+                - text: Education
+              - paragraph [ref=e87]: Your academic background
+            - generic [ref=e88]:
+              - generic [ref=e89]:
+                - generic [ref=e90]:
+                  - generic [ref=e91]: University
+                  - textbox "University" [disabled] [ref=e93]:
+                    - /placeholder: e.g., University of Cape Town
+                - generic [ref=e94]:
+                  - generic [ref=e95]: Major/Field of Study
+                  - textbox "Major/Field of Study" [disabled] [ref=e97]:
+                    - /placeholder: e.g., Public Health
+              - generic [ref=e98]:
+                - generic [ref=e99]:
+                  - generic [ref=e100]: Graduation Year
+                  - spinbutton "Graduation Year" [disabled] [ref=e102]
+                - generic [ref=e103]:
+                  - generic [ref=e104]: GPA (optional)
+                  - textbox "GPA (optional)" [disabled] [ref=e106]:
+                    - /placeholder: e.g., 3.5
+          - generic [ref=e107]:
+            - generic [ref=e110]:
+              - heading "Experience" [level=3] [ref=e111]:
+                - img [ref=e112]
+                - text: Experience
+              - paragraph [ref=e115]: Your work and volunteer experience
+            - generic [ref=e117]:
+              - img [ref=e118]
+              - paragraph [ref=e121]: No experience added yet
+              - paragraph [ref=e122]: Click "Add Experience" to get started
+        - generic [ref=e123]:
+          - generic [ref=e124]:
+            - heading "Profile Completion" [level=3] [ref=e126]
+            - generic [ref=e127]:
+              - generic [ref=e129]:
+                - generic [ref=e130]: Overall progress
+                - generic [ref=e131]: 20%
+              - generic [ref=e134]:
+                - generic [ref=e135]:
+                  - img [ref=e136]
+                  - generic [ref=e139]: Basic Information
+                - generic [ref=e140]:
+                  - img [ref=e141]
+                  - generic [ref=e144]: Education
+                - generic [ref=e145]:
+                  - img [ref=e146]
+                  - generic [ref=e149]: Experience
+                - generic [ref=e150]:
+                  - img [ref=e151]
+                  - generic [ref=e154]: Skills
+                - generic [ref=e155]:
+                  - img [ref=e156]
+                  - generic [ref=e159]: Assessments
+          - generic [ref=e160]:
+            - heading "Profile Tips" [level=3] [ref=e162]
+            - generic [ref=e163]:
+              - paragraph [ref=e165]:
+                - strong [ref=e166]: Complete all sections
+                - text: to increase your match score by up to 40%
+              - paragraph [ref=e168]:
+                - strong [ref=e169]: Add a professional photo
+                - text: to make your profile stand out
+              - paragraph [ref=e171]:
+                - strong [ref=e172]: Write a compelling bio
+                - text: highlighting your global health interests
+          - generic [ref=e173]:
+            - heading "Skills" [level=3] [ref=e176]
+            - generic [ref=e178]:
+              - generic [ref=e179]: Research
+              - generic [ref=e180]: Data Analysis
+              - generic [ref=e181]: Public Speaking
+  - generic [ref=e186] [cursor=pointer]:
+    - button "Open Next.js Dev Tools" [ref=e187]:
+      - img [ref=e188]
+    - generic [ref=e191]:
+      - button "Open issues overlay" [ref=e192]:
+        - generic [ref=e193]:
+          - generic [ref=e194]: "0"
+          - generic [ref=e195]: "1"
+        - generic [ref=e196]: Issue
+      - button "Collapse issues badge" [ref=e197]:
+        - img [ref=e198]
+  - alert [ref=e200]
+```

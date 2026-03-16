@@ -125,3 +125,26 @@ test-all-health: ## Test all service health endpoints
 	@echo "Scoring:    $$(curl -s http://localhost:8008/health > /dev/null && echo '✓ OK' || echo '✗ DOWN')"
 	@echo "Video:      $$(curl -s http://localhost:4000/health > /dev/null && echo '✓ OK' || echo '✗ DOWN')"
 
+# ============================================================================
+# MVP PRESENTATION COMMANDS
+# ============================================================================
+
+mvp-up: ## Start services with MVP configuration
+	@echo "Starting MVP services..."
+	docker compose --env-file .env.mvp up -d
+
+mvp-down: ## Stop MVP services
+	docker compose --env-file .env.mvp down
+
+mvp-seed: ## Seed demo data for presentation
+	@echo "Seeding demo data..."
+	docker compose --env-file .env.mvp exec -T postgres psql -U glohib -d glohib_db -c "INSERT INTO students (id, name, email) SELECT gen_random_uuid(), 'Demo Student ' || i, 'demo' || i || '@glohib.ai' FROM generate_series(1,5) i ON CONFLICT DO NOTHING;"
+
+mvp-validate: ## Run MVP validation checks
+	.\scripts\mvp-validate.bat
+
+mvp-reset: ## Reset MVP environment completely
+	@echo "Resetting MVP environment..."
+	docker compose --env-file .env.mvp down -v
+	docker compose --env-file .env.mvp up -d
+

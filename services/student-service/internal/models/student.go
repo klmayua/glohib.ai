@@ -85,9 +85,10 @@ type Skill struct {
 }
 
 type SkillCreate struct {
-	Name        string  `json:"name" validate:"required,min=1,max=100"`
-	Proficiency int     `json:"proficiency" validate:"required,min=1,max=5"`
-	Category    *string `json:"category,omitempty" validate:"omitempty,max=50"`
+	StudentID   uuid.UUID `json:"student_id"`
+	Name        string    `json:"name" validate:"required,min=1,max=100"`
+	Proficiency int       `json:"proficiency" validate:"required,min=1,max=5"`
+	Category    *string   `json:"category,omitempty" validate:"omitempty,max=50"`
 }
 
 type Education struct {
@@ -106,6 +107,7 @@ type Education struct {
 }
 
 type EducationCreate struct {
+	StudentID    uuid.UUID  `json:"student_id"`
 	Institution  string     `json:"institution" validate:"required,min=1,max=200"`
 	Degree       string     `json:"degree" validate:"required,min=1,max=100"`
 	FieldOfStudy string     `json:"field_of_study" validate:"required,min=1,max=100"`
@@ -130,6 +132,7 @@ type Experience struct {
 }
 
 type ExperienceCreate struct {
+	StudentID   uuid.UUID  `json:"student_id"`
 	Company     string     `json:"company" validate:"required,min=1,max=100"`
 	Position    string     `json:"position" validate:"required,min=1,max=100"`
 	StartDate   time.Time  `json:"start_date" validate:"required"`

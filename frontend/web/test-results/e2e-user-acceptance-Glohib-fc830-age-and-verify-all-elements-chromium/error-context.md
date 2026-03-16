@@ -1,0 +1,310 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - navigation [ref=e3]:
+      - generic [ref=e5]:
+        - generic [ref=e6]:
+          - img [ref=e8]
+          - heading "Glohib.ai" [level=1] [ref=e11]
+        - generic [ref=e12]:
+          - link "Opportunities" [ref=e13] [cursor=pointer]:
+            - /url: /dashboard/internships
+          - link "Programs" [ref=e14] [cursor=pointer]:
+            - /url: /dashboard/programs
+          - link "Global Map" [ref=e15] [cursor=pointer]:
+            - /url: /dashboard/map
+          - link "Resources" [ref=e16] [cursor=pointer]:
+            - /url: /resources
+          - link "Community" [ref=e17] [cursor=pointer]:
+            - /url: /community
+        - generic [ref=e18]:
+          - button "Toggle theme" [ref=e19]:
+            - generic [ref=e20]:
+              - img [ref=e21]
+              - generic [ref=e27]: Toggle theme
+          - link "Login" [ref=e29] [cursor=pointer]:
+            - /url: /login
+          - link "Get Started" [ref=e31] [cursor=pointer]:
+            - /url: /register
+            - text: Get Started
+            - img [ref=e32]
+    - main [ref=e34]:
+      - generic [ref=e36]:
+        - generic [ref=e37]:
+          - img [ref=e38]
+          - text: Connecting students with global health opportunities
+        - heading "Launch Your Career in Global Health" [level=1] [ref=e41]
+        - paragraph [ref=e42]: Glohib.ai connects students from Africa and Asia with internships, fellowships and global health opportunities across leading international organizations.
+        - generic [ref=e43]:
+          - link "Start Your Journey" [ref=e45] [cursor=pointer]:
+            - /url: /register
+            - text: Start Your Journey
+            - img [ref=e46]
+          - link "Explore Opportunities" [ref=e49] [cursor=pointer]:
+            - /url: /dashboard/internships
+        - link "How it Works →" [ref=e50] [cursor=pointer]:
+          - /url: /how-it-works
+      - generic [ref=e51]:
+        - generic [ref=e52]:
+          - generic [ref=e53]: 500+
+          - generic [ref=e54]: Opportunities
+          - generic [ref=e55]: Active programs
+        - generic [ref=e56]:
+          - generic [ref=e57]: 50+
+          - generic [ref=e58]: Organizations
+          - generic [ref=e59]: WHO, UNICEF & more
+        - generic [ref=e60]:
+          - generic [ref=e61]: 10K+
+          - generic [ref=e62]: Students
+          - generic [ref=e63]: Registered users
+        - generic [ref=e64]:
+          - generic [ref=e65]: 85%
+          - generic [ref=e66]: Match Rate
+          - generic [ref=e67]: Successful placements
+    - generic [ref=e69]:
+      - paragraph [ref=e70]: Partner organizations where our students intern
+      - generic [ref=e71]:
+        - generic [ref=e72]:
+          - generic [ref=e73]: 🏛️
+          - generic [ref=e74]: WHO
+        - generic [ref=e75]:
+          - generic [ref=e76]: 👶
+          - generic [ref=e77]: UNICEF
+        - generic [ref=e78]:
+          - generic [ref=e79]: 🏥
+          - generic [ref=e80]: MSF
+        - generic [ref=e81]:
+          - generic [ref=e82]: 🌍
+          - generic [ref=e83]: World Bank
+        - generic [ref=e84]:
+          - generic [ref=e85]: 🎯
+          - generic [ref=e86]: Gates Foundation
+    - generic [ref=e88]:
+      - generic [ref=e89]:
+        - heading "How Glohib.ai Works" [level=2] [ref=e90]
+        - paragraph [ref=e91]: Four simple steps to your dream global health career
+      - generic [ref=e92]:
+        - generic [ref=e93]:
+          - generic [ref=e94]: "01"
+          - img [ref=e96]
+          - heading "Create Your Profile" [level=3] [ref=e101]
+          - paragraph [ref=e102]: Build your global health talent profile
+        - generic [ref=e103]:
+          - generic [ref=e104]: "02"
+          - img [ref=e106]
+          - heading "Discover Opportunities" [level=3] [ref=e109]
+          - paragraph [ref=e110]: AI matches internships and fellowships
+        - generic [ref=e111]:
+          - generic [ref=e112]: "03"
+          - img [ref=e114]
+          - heading "Apply With One Click" [level=3] [ref=e117]
+          - paragraph [ref=e118]: Smart applications with profile auto-fill
+        - generic [ref=e119]:
+          - generic [ref=e120]: "04"
+          - img [ref=e122]
+          - heading "Launch Your Career" [level=3] [ref=e125]
+          - paragraph [ref=e126]: Join global health institutions
+    - generic [ref=e128]:
+      - generic [ref=e129]:
+        - generic [ref=e130]:
+          - heading "Featured Opportunities" [level=2] [ref=e131]
+          - paragraph [ref=e132]: Hand-picked programs launching soon
+        - link "View All" [ref=e133] [cursor=pointer]:
+          - /url: /dashboard/internships
+          - button "View All" [ref=e134]:
+            - generic [ref=e135]:
+              - text: View All
+              - img [ref=e136]
+      - generic [ref=e138]:
+        - generic [ref=e140]:
+          - generic [ref=e141]:
+            - img [ref=e142]
+            - generic [ref=e145]: WHO
+          - heading "Global Health Policy Intern" [level=3] [ref=e146]
+          - generic [ref=e147]:
+            - generic [ref=e148]:
+              - img [ref=e149]
+              - text: Geneva, Switzerland
+            - generic [ref=e152]:
+              - img [ref=e153]
+              - text: "Deadline: Apr 15, 2026"
+          - generic [ref=e155]: Internship
+          - link "Apply Now" [ref=e157] [cursor=pointer]:
+            - /url: /dashboard/internships
+            - text: Apply Now
+            - img [ref=e158]
+        - generic [ref=e161]:
+          - generic [ref=e162]:
+            - img [ref=e163]
+            - generic [ref=e166]: UNICEF
+          - heading "Epidemiology Research Fellow" [level=3] [ref=e167]
+          - generic [ref=e168]:
+            - generic [ref=e169]:
+              - img [ref=e170]
+              - text: Nairobi, Kenya
+            - generic [ref=e173]:
+              - img [ref=e174]
+              - text: "Deadline: Apr 30, 2026"
+          - generic [ref=e176]: Fellowship
+          - link "Apply Now" [ref=e178] [cursor=pointer]:
+            - /url: /dashboard/internships
+            - text: Apply Now
+            - img [ref=e179]
+        - generic [ref=e182]:
+          - generic [ref=e183]:
+            - img [ref=e184]
+            - generic [ref=e187]: MSF
+          - heading "Public Health Program Coordinator" [level=3] [ref=e188]
+          - generic [ref=e189]:
+            - generic [ref=e190]:
+              - img [ref=e191]
+              - text: Remote
+            - generic [ref=e194]:
+              - img [ref=e195]
+              - text: "Deadline: May 15, 2026"
+          - generic [ref=e197]: Program
+          - link "Apply Now" [ref=e199] [cursor=pointer]:
+            - /url: /dashboard/internships
+            - text: Apply Now
+            - img [ref=e200]
+    - generic [ref=e204]:
+      - generic [ref=e205]:
+        - heading "Explore Opportunities Worldwide" [level=2] [ref=e206]
+        - paragraph [ref=e207]: Discover global health programs across 50+ countries. Filter by region, organization type, or program focus to find your perfect match.
+        - generic [ref=e208]:
+          - generic [ref=e209]:
+            - generic [ref=e210]: 50+
+            - generic [ref=e211]: Countries
+          - generic [ref=e212]:
+            - generic [ref=e213]: 500+
+            - generic [ref=e214]: Programs
+          - generic [ref=e215]:
+            - generic [ref=e216]: 10K+
+            - generic [ref=e217]: Students
+          - generic [ref=e218]:
+            - generic [ref=e219]: 85%
+            - generic [ref=e220]: Match Rate
+        - link "Explore Global Map" [ref=e222] [cursor=pointer]:
+          - /url: /dashboard/map
+          - text: Explore Global Map
+          - img [ref=e223]
+      - generic [ref=e228]:
+        - img [ref=e229]
+        - paragraph [ref=e232]: Interactive Global Map
+        - paragraph [ref=e233]: Explore opportunities by region
+    - generic [ref=e238]:
+      - generic [ref=e239]:
+        - heading "Success Stories" [level=2] [ref=e240]
+        - paragraph [ref=e241]: Hear from students who launched their global health careers through Glohib.ai
+      - generic [ref=e242]:
+        - generic [ref=e244]:
+          - generic [ref=e245]:
+            - img [ref=e246]
+            - img [ref=e248]
+            - img [ref=e250]
+            - img [ref=e252]
+            - img [ref=e254]
+          - paragraph [ref=e256]: “Glohib.ai helped me secure an internship at WHO Geneva. The AI matching was spot-on with my epidemiology background.”
+          - generic [ref=e257]:
+            - generic [ref=e258]: S
+            - generic [ref=e259]:
+              - paragraph [ref=e260]: Sarah M.
+              - paragraph [ref=e261]: Public Health Student
+          - paragraph [ref=e263]: Placed at WHO Geneva
+        - generic [ref=e265]:
+          - generic [ref=e266]:
+            - img [ref=e267]
+            - img [ref=e269]
+            - img [ref=e271]
+            - img [ref=e273]
+            - img [ref=e275]
+          - paragraph [ref=e277]: “The platform made it easy to find opportunities that matched my background. I'm now interning at UNICEF in Nairobi.”
+          - generic [ref=e278]:
+            - generic [ref=e279]: J
+            - generic [ref=e280]:
+              - paragraph [ref=e281]: James K.
+              - paragraph [ref=e282]: Medical Student
+          - paragraph [ref=e284]: Placed at UNICEF Kenya
+        - generic [ref=e286]:
+          - generic [ref=e287]:
+            - img [ref=e288]
+            - img [ref=e290]
+            - img [ref=e292]
+            - img [ref=e294]
+            - img [ref=e296]
+          - paragraph [ref=e298]: “The mentorship component was invaluable. My mentor helped me prepare for interviews and navigate the application process.”
+          - generic [ref=e299]:
+            - generic [ref=e300]: P
+            - generic [ref=e301]:
+              - paragraph [ref=e302]: Priya S.
+              - paragraph [ref=e303]: Global Health Masters
+          - paragraph [ref=e305]: Placed at Gates Foundation
+    - generic [ref=e308]:
+      - heading "Get Global Health Opportunities Weekly" [level=2] [ref=e309]
+      - paragraph [ref=e310]: Subscribe to receive curated internship and fellowship opportunities directly in your inbox every week.
+      - generic [ref=e311]:
+        - textbox "Enter your email" [ref=e312]
+        - button "Subscribe" [ref=e313]:
+          - generic [ref=e314]:
+            - text: Subscribe
+            - img [ref=e315]
+      - paragraph [ref=e317]: No spam. Unsubscribe anytime.
+    - contentinfo [ref=e318]:
+      - generic [ref=e319]:
+        - generic [ref=e320]:
+          - generic [ref=e321]:
+            - heading "Platform" [level=4] [ref=e322]
+            - list [ref=e323]:
+              - listitem [ref=e324]:
+                - link "Opportunities" [ref=e325] [cursor=pointer]:
+                  - /url: /dashboard/internships
+              - listitem [ref=e326]:
+                - link "Programs" [ref=e327] [cursor=pointer]:
+                  - /url: /dashboard/programs
+              - listitem [ref=e328]:
+                - link "Global Map" [ref=e329] [cursor=pointer]:
+                  - /url: /dashboard/map
+          - generic [ref=e330]:
+            - heading "Company" [level=4] [ref=e331]
+            - list [ref=e332]:
+              - listitem [ref=e333]:
+                - link "About Us" [ref=e334] [cursor=pointer]:
+                  - /url: /about
+              - listitem [ref=e335]:
+                - link "Partners" [ref=e336] [cursor=pointer]:
+                  - /url: /partners
+              - listitem [ref=e337]:
+                - link "Contact" [ref=e338] [cursor=pointer]:
+                  - /url: /contact
+          - generic [ref=e339]:
+            - heading "Resources" [level=4] [ref=e340]
+            - list [ref=e341]:
+              - listitem [ref=e342]:
+                - link "Blog" [ref=e343] [cursor=pointer]:
+                  - /url: /blog
+              - listitem [ref=e344]:
+                - link "Application Guide" [ref=e345] [cursor=pointer]:
+                  - /url: /guides
+              - listitem [ref=e346]:
+                - link "FAQ" [ref=e347] [cursor=pointer]:
+                  - /url: /faq
+          - generic [ref=e348]:
+            - heading "Legal" [level=4] [ref=e349]
+            - list [ref=e350]:
+              - listitem [ref=e351]:
+                - link "Privacy Policy" [ref=e352] [cursor=pointer]:
+                  - /url: /privacy
+              - listitem [ref=e353]:
+                - link "Terms of Service" [ref=e354] [cursor=pointer]:
+                  - /url: /terms
+        - generic [ref=e356]:
+          - generic [ref=e357]:
+            - img [ref=e359]
+            - generic [ref=e362]: Glohib.ai
+          - paragraph [ref=e363]: © 2026 Glohib.ai. All rights reserved.
+  - button "Open Next.js Dev Tools" [ref=e369] [cursor=pointer]:
+    - img [ref=e370]
+  - alert [ref=e373]
+```

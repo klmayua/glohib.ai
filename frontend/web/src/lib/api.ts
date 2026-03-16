@@ -34,10 +34,10 @@ api.interceptors.response.use(
 
 export const authAPI = {
   register: (data: { email: string; password: string; role: string }) =>
-    api.post('/api/v1/auth/register', data),
+    api.post('/api/auth/register', data),
   
   login: (data: { email: string; password: string }) =>
-    api.post('/api/v1/auth/login', data),
+    api.post('/api/auth/login', data),
   
   logout: () => api.post('/api/v1/auth/logout'),
   

@@ -1,7 +1,6 @@
 package redis
 
 import (
-	"context"
 	"github.com/glohib/identity-service/internal/config"
 	"github.com/redis/go-redis/v9"
 )

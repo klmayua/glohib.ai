@@ -2,10 +2,10 @@ package repository
 
 import (
 	"context"
+	"strconv"
 
 	"github.com/glohib.ai/internship/internal/db"
 	"github.com/glohib.ai/internship/internal/models"
-	"github.com/google/uuid"
 )
 
 type InternshipRepository interface {
@@ -133,30 +133,30 @@ func (r *internshipRepository) Search(ctx context.Context, filter *models.Search
 	argIndex := 1
 
 	if filter.Query != "" {
-		query += ` AND (title ILIKE $` + string(rune(argIndex)) + ` OR description ILIKE $` + string(rune(argIndex)) + `)`
+		query += ` AND (title ILIKE $` + strconv.Itoa(argIndex) + ` OR description ILIKE $` + strconv.Itoa(argIndex) + `)`
 		args = append(args, "%"+filter.Query+"%")
 		argIndex++
 	}
 
 	if filter.Location != "" {
-		query += ` AND location ILIKE $` + string(rune(argIndex))
+		query += ` AND location ILIKE $` + strconv.Itoa(argIndex)
 		args = append(args, "%"+filter.Location+"%")
 		argIndex++
 	}
 
 	if filter.Remote != nil {
-		query += ` AND remote = $` + string(rune(argIndex))
+		query += ` AND remote = $` + strconv.Itoa(argIndex)
 		args = append(args, *filter.Remote)
 		argIndex++
 	}
 
 	if filter.Paid != nil {
-		query += ` AND paid = $` + string(rune(argIndex))
+		query += ` AND paid = $` + strconv.Itoa(argIndex)
 		args = append(args, *filter.Paid)
 		argIndex++
 	}
 
-	query += ` ORDER BY created_at DESC LIMIT $` + string(rune(argIndex))
+	query += ` ORDER BY created_at DESC LIMIT $` + strconv.Itoa(argIndex)
 	args = append(args, filter.Limit)
 
 	rows, err := r.db.Query(ctx, query, args...)

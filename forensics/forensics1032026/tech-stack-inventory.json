@@ -1,0 +1,204 @@
+{
+  "audit_date": "2026-03-10",
+  "project_name": "GlohibAI",
+  "project_path": "C:\\Users\\UCHE\\my-qwen-project\\PROJECTS\\GlohibAI",
+  "technology_stack": {
+    "dependency_manifests": {
+      "files_found": [
+        "package.json",
+        "requirements.txt",
+        "frontend/web/package.json",
+        "services/scoring-service/requirements.txt",
+        "services/recommendation-service/requirements.txt"
+      ],
+      "node_projects": 2,
+      "python_projects": 3,
+      "go_projects": 0
+    },
+    "containerization": {
+      "dockerfiles": [
+        "docker/Dockerfile.scoring",
+        "docker/Dockerfile.application",
+        "docker/Dockerfile.internship",
+        "docker/Dockerfile.employer",
+        "docker/Dockerfile.student",
+        "docker/Dockerfile.identity",
+        "docker/Dockerfile.recommendation",
+        "services/assessment-service/Dockerfile",
+        "services/internship-service/Dockerfile",
+        "services/student-service/Dockerfile",
+        "services/identity-service/Dockerfile",
+        "services/video-service/Dockerfile",
+        "services/recommendation-service/Dockerfile",
+        "services/scoring-service/Dockerfile",
+        "Dockerfile.migration",
+        "Dockerfile.deprecated"
+      ],
+      "docker_compose_files": [
+        "docker-compose.yml",
+        "docker-compose.fastapi.yml"
+      ],
+      "total_container_configs": 18
+    },
+    "cicd_configs": {
+      "github_workflows": [],
+      "gitlab_ci": [],
+      "jenkinsfile": [],
+      "azure_pipelines": [],
+      "status": "NO_CI_CD_CONFIGURED"
+    },
+    "infrastructure_as_code": {
+      "terraform_files": [],
+      "kubernetes_manifests": [],
+      "status": "EMPTY_DIRECTORIES_ONLY"
+    },
+    "configuration_files": {
+      "yaml_files": [
+        "extracted_intelligence/pitchdeck_structured.yaml",
+        "kimi_bridge/context_bundle/context_package.yaml",
+        "kimi_bridge/kimi_build_request.yaml",
+        "planning_output/step_001_project_structure.yaml",
+        "services/assessment-service/config.yaml",
+        "services/assessment-service/docker-compose.yaml",
+        "services/identity-service/config.yaml",
+        "services/identity-service/docker-compose.yaml",
+        "services/internship-service/config.yaml",
+        "services/internship-service/docker-compose.yaml",
+        "services/recommendation-service/docker-compose.yaml",
+        "services/scoring-service/docker-compose.yaml",
+        "services/student-service/config.yaml",
+        "services/student-service/docker-compose.yaml",
+        "services/video-service/docker-compose.yaml"
+      ],
+      "env_files": [
+        ".env",
+        ".env.docker",
+        ".env.example",
+        "frontend/web/.env.local.example"
+      ],
+      "other_configs": [
+        "alembic.ini",
+        "tsconfig.json",
+        "frontend/web/tsconfig.json",
+        "frontend/web/next.config.js",
+        "frontend/web/tailwind.config.js"
+      ]
+    },
+    "source_code": {
+      "python_files": 79,
+      "typescript_files": 3841,
+      "go_files": "Multiple (identity, student, internship, assessment services)",
+      "javascript_files": "Multiple (video-service, frontend)",
+      "main_services": {
+        "identity_service": {
+          "language": "Go 1.22",
+          "framework": "Gin",
+          "ports": [8080, 50051],
+          "features": ["JWT Auth", "OAuth2", "API Keys", "gRPC"]
+        },
+        "student_service": {
+          "language": "Go 1.22",
+          "framework": "Gin",
+          "port": 8082,
+          "features": ["Profile CRUD", "Skills", "Education", "Experience"]
+        },
+        "internship_service": {
+          "language": "Go 1.22",
+          "framework": "Gin",
+          "port": 8083,
+          "features": ["CRUD", "Search", "Vector Search", "Applications"]
+        },
+        "assessment_service": {
+          "language": "Go 1.22",
+          "framework": "Gin",
+          "ports": [8084, 50054],
+          "features": ["7-stage workflow", "Timer", "Auto-grading"]
+        },
+        "recommendation_service": {
+          "language": "Python 3.11",
+          "framework": "FastAPI",
+          "port": 8007,
+          "features": ["Sentence Transformers", "Cosine Similarity", "Behavioral Tracking"]
+        },
+        "scoring_service": {
+          "language": "Python 3.11",
+          "framework": "FastAPI",
+          "port": 8008,
+          "features": ["XGBoost", "SHAP", "Model Registry"]
+        },
+        "video_service": {
+          "language": "Node.js 20",
+          "framework": "Express",
+          "port": 4000,
+          "features": ["TUS Uploads", "FFmpeg", "Whisper", "WebRTC"]
+        },
+        "frontend_web": {
+          "language": "TypeScript",
+          "framework": "Next.js 14",
+          "port": 3000,
+          "features": ["Auth", "Dashboard", "Internships", "Profile"]
+        }
+      }
+    }
+  },
+  "infrastructure_components": {
+    "database": {
+      "postgresql": {
+        "image": "pgvector/pgvector:pg16",
+        "port": 5432,
+        "extensions": ["pgvector", "uuid-ossp", "pgcrypto", "citext"]
+      }
+    },
+    "caching": {
+      "redis": {
+        "image": "redis:7-alpine",
+        "port": 6379
+      }
+    },
+    "message_queue": {
+      "rabbitmq": {
+        "image": "rabbitmq:3.11-management-alpine",
+        "ports": [5672, 15672]
+      }
+    },
+    "vector_db": {
+      "qdrant": {
+        "image": "qdrant/qdrant:v1.7.0",
+        "ports": [6333, 6334]
+      }
+    },
+    "object_storage": {
+      "minio": {
+        "image": "minio/minio:latest",
+        "ports": [9000, 9001]
+      }
+    }
+  },
+  "ai_ml_dependencies": {
+    "torch": ">=2.1.0",
+    "transformers": ">=4.36.0",
+    "sentence-transformers": ">=2.2.2",
+    "langchain": ">=0.1.0",
+    "xgboost": ">=2.0.3",
+    "shap": ">=0.43.0",
+    "whisper-openai": ">=1.20231117",
+    "mediapipe": ">=0.10.9",
+    "ray-serve": ">=2.8.1"
+  },
+  "security_tools": {
+    "configured": [],
+    "missing": [
+      "SAST (SonarQube/CodeQL)",
+      "DAST (OWASP ZAP)",
+      "SCA (Snyk/Dependabot)",
+      "Secret Detection (GitLeaks)"
+    ]
+  },
+  "file_statistics": {
+    "total_py_files": 79,
+    "total_ts_files": 3841,
+    "total_dockerfiles": 16,
+    "total_yaml_configs": 15,
+    "total_md_documents": 20
+  }
+}

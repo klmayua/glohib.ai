@@ -1,9 +1,9 @@
-import * as minio from '@minio/minio';
+import * as Minio from 'minio';
 import { Readable } from 'node:stream';
 import { logger } from '../utils/logger.js';
 
 export const createMinioClient = () =>
-  new minio.Client({
+  new Minio.Client({
     endPoint: process.env.MINIO_ENDPOINT!.split(':')[0],
     port: Number(process.env.MINIO_ENDPOINT!.split(':')[1]),
     useSSL: process.env.MINIO_USE_SSL === 'true',
@@ -12,7 +12,7 @@ export const createMinioClient = () =>
   });
 
 export class StorageService {
-  constructor(private minio: minio.Client) {}
+  constructor(private minio: Minio.Client) {}
 
   async ensureBucket(name: string) {
     const exists = await this.minio.bucketExists(name);

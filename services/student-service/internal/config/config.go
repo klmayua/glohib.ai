@@ -77,6 +77,20 @@ func Load() (*Config, error) {
 	cfg.Redis.Host = getEnv("REDIS_HOST", cfg.Redis.Host)
 	cfg.Redis.Password = getEnv("REDIS_PASSWORD", cfg.Redis.Password)
 
+	// Ensure database pool sizes are valid
+	if cfg.Database.MaxConns < 1 {
+		cfg.Database.MaxConns = 25
+	}
+	if cfg.Database.MinConns < 1 {
+		cfg.Database.MinConns = 5
+	}
+	if cfg.Database.MinConns > cfg.Database.MaxConns {
+		cfg.Database.MinConns = cfg.Database.MaxConns
+	}
+	if cfg.Redis.PoolSize <= 0 {
+		cfg.Redis.PoolSize = 10
+	}
+
 	return cfg, nil
 }
 

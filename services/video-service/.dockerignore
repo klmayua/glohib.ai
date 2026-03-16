@@ -1,0 +1,6 @@
+.git
+*.md
+.env*
+node_modules
+dist
+Dockerfile

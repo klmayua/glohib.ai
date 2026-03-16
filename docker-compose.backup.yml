@@ -1,0 +1,77 @@
+# GlohibAI Backup Service Configuration
+# Add this to your docker-compose.yml or use with docker-compose.override.yml
+
+version: '3.8'
+
+services:
+  # ===========================================================================
+  # POSTGRES BACKUP SERVICE
+  # ===========================================================================
+  postgres-backup:
+    image: postgres:16-alpine
+    container_name: glohib-postgres-backup
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-glohib}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-changeme}
+      - POSTGRES_DB=${POSTGRES_DB:-glohib_db}
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - BACKUP_DIR=/backups/postgres
+      - RETENTION_DAYS=7
+    volumes:
+      - backup_data:/backups
+      - ./scripts/backup-postgres.sh:/backup-postgres.sh:ro
+    entrypoint: ["/bin/sh", "-c"]
+    command: >
+      apk add --no-cache postgresql-client gzip &&
+      chmod +x /backup-postgres.sh &&
+      while true; do
+        /backup-postgres.sh;
+        sleep 86400;  # Run every 24 hours
+      done
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - glohib-net
+
+  # ===========================================================================
+  # REDIS BACKUP SERVICE
+  # ===========================================================================
+  redis-backup:
+    image: redis:7-alpine
+    container_name: glohib-redis-backup
+    restart: unless-stopped
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - BACKUP_DIR=/backups/redis
+      - RETENTION_DAYS=7
+    volumes:
+      - backup_data:/backups
+      - redis_data:/data:ro
+      - ./scripts/backup-redis.sh:/backup-redis.sh:ro
+    entrypoint: ["/bin/sh", "-c"]
+    command: >
+      apk add --no-cache redis &&
+      chmod +x /backup-redis.sh &&
+      while true; do
+        /backup-redis.sh;
+        sleep 86400;  # Run every 24 hours
+      done
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - glohib-net
+
+volumes:
+  backup_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  glohib-net:
+    external: true

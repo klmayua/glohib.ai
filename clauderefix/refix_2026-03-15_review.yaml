@@ -1,0 +1,548 @@
+# ================================================================================
+# GLOHIB.AI - CLAUDE REFIX & DEPLOYMENT PLAN
+# Generated: 2026-03-15
+# Project:   C:/Users/UCHE/my-qwen-project/PROJECTS/GlohibAI
+# Platform:  Microservices (4 Go + 2 Python + 1 Node.js + 1 Next.js frontend)
+# ================================================================================
+
+meta:
+  project: GlohibAI
+  date: "2026-03-15"
+  reviewed_by: claude-opus-4-6
+  status: review_complete
+  architecture: microservices
+  services_count: 8
+  languages:
+    - Go 1.22 (identity, student, internship, assessment)
+    - Python 3.11 (recommendation, scoring)
+    - Node.js 20 / TypeScript (video)
+    - Next.js 14 / React 18 (frontend/web)
+  infra:
+    - PostgreSQL 16 (pgvector)
+    - Redis 7
+    - MinIO (S3-compatible object storage)
+
+# ================================================================================
+# ISSUES FOUND - ORDERED BY SEVERITY
+# ================================================================================
+
+issues:
+
+  # --------------------------------------------------------------------------
+  # CRITICAL - Will prevent Docker build entirely
+  # --------------------------------------------------------------------------
+
+  - id: C1
+    severity: CRITICAL
+    component: Go services (all 4)
+    title: "Missing go.sum files - Docker build will fail at 'go mod download'"
+    files:
+      - services/identity-service/go.sum      # MISSING
+      - services/student-service/go.sum        # MISSING
+      - services/internship-service/go.sum     # MISSING
+      - services/assessment-service/go.sum     # MISSING
+    detail: >
+      Every Go Dockerfile runs `go mod download` which requires go.sum.
+      identity-service has go.sum.new (likely from a failed rename).
+      No go.sum exists in any Go service directory.
+    fix:
+      steps:
+        - description: "Generate go.sum for each Go service"
+          commands:
+            - "cd services/identity-service && go mod tidy"
+            - "cd services/student-service && go mod tidy"
+            - "cd services/internship-service && go mod tidy"
+            - "cd services/assessment-service && go mod tidy"
+        - description: "For identity-service, also try the existing go.sum.new"
+          commands:
+            - "cd services/identity-service && mv go.sum.new go.sum"
+            - "# Then verify: go mod verify"
+
+  - id: C2
+    severity: CRITICAL
+    component: Python services (recommendation + scoring)
+    title: "Missing __init__.py files - all imports will fail at runtime"
+    files:
+      # recommendation-service - 4 missing
+      - services/recommendation-service/app/__init__.py
+      - services/recommendation-service/app/api/__init__.py
+      - services/recommendation-service/app/models/__init__.py
+      - services/recommendation-service/app/services/__init__.py
+      # scoring-service - 4 missing
+      - services/scoring-service/app/__init__.py
+      - services/scoring-service/app/models/__init__.py
+      - services/scoring-service/app/services/__init__.py
+      - services/scoring-service/app/utils/__init__.py
+    detail: >
+      Python cannot treat directories as packages without __init__.py.
+      Both services use imports like `from app.api.routes import router`
+      and `from app.models.score import ...` which require package markers.
+      uvicorn will crash with ModuleNotFoundError on container startup.
+    fix:
+      steps:
+        - description: "Create all 8 missing __init__.py files"
+          commands:
+            - "touch services/recommendation-service/app/__init__.py"
+            - "touch services/recommendation-service/app/api/__init__.py"
+            - "touch services/recommendation-service/app/models/__init__.py"
+            - "touch services/recommendation-service/app/services/__init__.py"
+            - "touch services/scoring-service/app/__init__.py"
+            - "touch services/scoring-service/app/models/__init__.py"
+            - "touch services/scoring-service/app/services/__init__.py"
+            - "touch services/scoring-service/app/utils/__init__.py"
+
+  - id: C3
+    severity: CRITICAL
+    component: frontend/web
+    title: "No Dockerfile exists - cannot build frontend container"
+    files:
+      - frontend/web/Dockerfile  # DOES NOT EXIST
+    detail: >
+      docker-compose.traefik.yml references ./frontend/web/Dockerfile but
+      no such file exists. The frontend is a Next.js 14 app with React 18.
+      next.config.js does NOT set output: 'standalone', so a standard
+      Next.js Docker build is needed.
+    fix:
+      create_file: frontend/web/Dockerfile
+      content: |
+        FROM node:20-alpine AS builder
+        WORKDIR /app
+        COPY package.json package-lock.json ./
+        RUN npm ci --frozen-lockfile
+        COPY . .
+        ENV NEXT_TELEMETRY_DISABLED=1
+        RUN npm run build
+
+        FROM node:20-alpine
+        WORKDIR /app
+        RUN addgroup -g 1001 -S app && adduser -S -u 1001 -G app app
+        COPY --from=builder /app/.next ./.next
+        COPY --from=builder /app/node_modules ./node_modules
+        COPY --from=builder /app/package.json ./
+        COPY --from=builder /app/public ./public
+        USER app
+        EXPOSE 3000
+        ENV NODE_ENV=production
+        HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
+          CMD wget -q --spider http://localhost:3000 || exit 1
+        CMD ["npm", "start"]
+      also_recommended: >
+        Add `output: 'standalone'` to next.config.js for a smaller image,
+        then change COPY to use .next/standalone instead of full node_modules.
+
+  # --------------------------------------------------------------------------
+  # HIGH - Will cause runtime failures after build
+  # --------------------------------------------------------------------------
+
+  - id: H1
+    severity: HIGH
+    component: scoring-service
+    title: "model-store directory not created - service crashes on startup"
+    file: services/scoring-service/app/main.py:29
+    code: 'MODEL_REG_PATH = os.getenv("MODEL_REGISTRY_PATH", "./model-store")'
+    detail: >
+      The lifespan function calls registry.load_model(DEFAULT_VER) on startup.
+      No ./model-store directory exists in the container. The ModelRegistry
+      will fail with FileNotFoundError.
+    fix:
+      steps:
+        - description: "Add model-store creation to Dockerfile"
+          file: services/scoring-service/Dockerfile
+          change: "Add before USER line: RUN mkdir -p /app/model-store && chown app:app /app/model-store"
+        - description: "Or add to docker-compose.yml scoring-service"
+          change: |
+            volumes:
+              - scoring_model_store:/app/model-store
+
+  - id: H2
+    severity: HIGH
+    component: MinIO
+    title: "Health check uses 'mc ready' which does not exist in minio image"
+    file: docker-compose.yml:70
+    code: 'test: ["CMD", "mc", "ready", "local"]'
+    detail: >
+      The MinIO server image does NOT include the mc (MinIO Client) binary.
+      The mc tool is in a separate minio/mc image. This health check will
+      always fail, causing dependent services (video-service) to never start.
+    fix:
+      file: docker-compose.yml
+      old: |
+        test: ["CMD", "mc", "ready", "local"]
+      new: |
+        test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      note: "Also add curl to minio command or use wget. Alternatively:"
+      alt: |
+        test: ["CMD-SHELL", "wget -q --spider http://localhost:9000/minio/health/live || exit 1"]
+
+  - id: H3
+    severity: HIGH
+    component: postgres init
+    title: "Hardcoded password in init_postgres.sql conflicts with env vars"
+    file: docker/init_postgres.sql:20
+    code: "CREATE ROLE glohib_app WITH LOGIN PASSWORD 'changeme';"
+    detail: >
+      The glohib_app role gets a hardcoded password 'changeme' regardless
+      of what POSTGRES_PASSWORD is set to in .env. Services connecting
+      as the main glohib user work fine, but any service configured to
+      use glohib_app will have credential confusion.
+    fix:
+      file: docker/init_postgres.sql
+      replace_line_20: >
+        Remove the hardcoded password. Use the main POSTGRES_USER role
+        instead, or pass the password via environment variable:
+      new_content: |
+        DO $$
+        BEGIN
+            IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'glohib_app') THEN
+                CREATE ROLE glohib_app WITH LOGIN PASSWORD current_setting('app.glohib_app_password', true);
+            END IF;
+        END
+        $$;
+      pragmatic_fix: >
+        Simplest approach: delete the glohib_app role creation entirely.
+        All services already connect as the main 'glohib' user via
+        POSTGRES_USER env var. The extra role is unused overhead.
+
+  - id: H4
+    severity: HIGH
+    component: alembic
+    title: "Hardcoded DB URL with wrong port - migrations will fail"
+    file: alembic.ini:6
+    code: "sqlalchemy.url = postgresql://glohib:changeme@localhost:5434/glohib_db"
+    detail: >
+      Port 5434 does not match any compose file (Postgres runs on 5432).
+      Password 'changeme' may not match .env. Using localhost won't work
+      from inside a Docker container (should be 'postgres' hostname).
+    fix:
+      steps:
+        - description: "Update alembic.ini to use env var override"
+          file: alembic.ini
+          old: "sqlalchemy.url = postgresql://glohib:changeme@localhost:5434/glohib_db"
+          new: "# sqlalchemy.url is set programmatically in env.py via DATABASE_URL"
+        - description: "Or fix for local dev"
+          new: "sqlalchemy.url = postgresql://glohib:changeme@localhost:5432/glohib_db"
+
+  - id: H5
+    severity: HIGH
+    component: docker/ (deprecated Dockerfiles)
+    title: "Competing Dockerfile sets cause confusion"
+    files:
+      - docker/Dockerfile.identity
+      - docker/Dockerfile.student
+      - docker/Dockerfile.internship
+      - docker/Dockerfile.application
+      - docker/Dockerfile.employer
+      - docker/Dockerfile.recommendation
+      - docker/Dockerfile.scoring
+    detail: >
+      Two full sets of Dockerfiles exist: docker/*.Dockerfile (deprecated,
+      use backend/ paths) and services/*/Dockerfile (current, self-contained).
+      docker-compose.yml correctly references services/*/Dockerfile.
+      docker-compose.fastapi.yml references docker/Dockerfile.* which use
+      wrong COPY paths (backend/ instead of current service structure).
+    fix:
+      steps:
+        - description: "Delete or clearly mark deprecated files"
+          commands:
+            - "# Option A: Remove deprecated Dockerfiles"
+            - "rm docker/Dockerfile.identity docker/Dockerfile.student docker/Dockerfile.internship"
+            - "rm docker/Dockerfile.application docker/Dockerfile.employer"
+            - "rm docker/Dockerfile.recommendation docker/Dockerfile.scoring"
+            - "# Option B: Rename to prevent accidental use"
+            - "for f in docker/Dockerfile.*; do mv $f ${f}.deprecated; done"
+        - description: "Delete docker-compose.fastapi.yml (uses wrong Dockerfiles)"
+          commands:
+            - "rm docker-compose.fastapi.yml"
+            - "# Or rename: mv docker-compose.fastapi.yml docker-compose.fastapi.yml.deprecated"
+
+  - id: H6
+    severity: HIGH
+    component: services/*-svc (duplicate stubs)
+    title: "9 duplicate *-svc directories alongside real *-service directories"
+    files:
+      - services/analytics-svc/       # stub, no Dockerfile
+      - services/assessment-svc/      # stub, no Dockerfile
+      - services/identity-svc/        # stub, no Dockerfile
+      - services/internship-svc/      # stub, no Dockerfile
+      - services/mentor-svc/          # stub, no Dockerfile
+      - services/recommendation-svc/  # stub, no Dockerfile
+      - services/scoring-svc/         # stub, no Dockerfile
+      - services/student-svc/         # stub, no Dockerfile
+      - services/video-svc/           # stub, no Dockerfile
+    detail: >
+      These are leftover stubs from an earlier naming convention.
+      The real implementations are in *-service/ directories.
+      They add confusion and bloat to the Docker build context.
+    fix:
+      commands:
+        - "rm -rf services/analytics-svc services/assessment-svc services/identity-svc"
+        - "rm -rf services/internship-svc services/mentor-svc services/recommendation-svc"
+        - "rm -rf services/scoring-svc services/student-svc services/video-svc"
+
+  # --------------------------------------------------------------------------
+  # MEDIUM - Won't block build but needs attention
+  # --------------------------------------------------------------------------
+
+  - id: M1
+    severity: MEDIUM
+    component: docker-compose.traefik.yml
+    title: "External network 'glohib-net' requires main compose running first"
+    file: docker-compose.traefik.yml:262
+    detail: >
+      Declares glohib-net as external: true. Must run main docker-compose.yml
+      first to create the network. If deploying traefik stack independently,
+      it will fail with 'network glohib-net not found'.
+    fix: >
+      Document the dependency, or create the network manually:
+      docker network create glohib-net
+
+  - id: M2
+    severity: MEDIUM
+    component: docker-compose.yml
+    title: "Weak default credentials in YAML anchors"
+    file: docker-compose.yml:3
+    code: "POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}"
+    detail: >
+      Default password 'changeme' is baked into the compose file.
+      While overridden by .env in practice, anyone running without
+      .env gets an insecure deployment.
+    fix: >
+      Remove defaults for secrets. Require .env to be present:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+
+  - id: M3
+    severity: MEDIUM
+    component: scoring-service
+    title: "structlog dependency not in main requirements.txt"
+    file: services/scoring-service/app/main.py:5
+    code: "import structlog"
+    detail: >
+      structlog is in scoring-service/requirements.txt (correct for Docker)
+      but NOT in root requirements.txt. Only matters for local development.
+    fix: "Add 'structlog>=24.1.0' to root requirements.txt if needed for local dev"
+
+  - id: M4
+    severity: MEDIUM
+    component: frontend/web
+    title: "next.config.js missing standalone output for optimized Docker"
+    file: frontend/web/next.config.js
+    detail: >
+      Without output: 'standalone', the Docker image must copy all of
+      node_modules (~200MB+). With standalone, the image drops to ~50MB.
+    fix:
+      file: frontend/web/next.config.js
+      old: |
+        const nextConfig = {
+          reactStrictMode: true,
+      new: |
+        const nextConfig = {
+          output: 'standalone',
+          reactStrictMode: true,
+
+  - id: M5
+    severity: MEDIUM
+    component: root level
+    title: "Dockerfile.deprecated still present at project root"
+    file: Dockerfile.deprecated
+    detail: "Old monolithic Dockerfile. Adds confusion. Delete it."
+    fix:
+      commands:
+        - "rm Dockerfile.deprecated"
+
+  - id: M6
+    severity: MEDIUM
+    component: MinIO
+    title: "init_minio.sh never called - buckets not auto-created"
+    file: docker/init_minio.sh
+    detail: >
+      The script creates MinIO buckets but is never mounted or called
+      by any docker-compose service. The glohib-assets bucket won't exist.
+    fix:
+      description: "Add a MinIO init container to docker-compose.yml"
+      add_service: |
+        minio-init:
+          image: minio/mc:latest
+          depends_on:
+            minio:
+              condition: service_healthy
+          entrypoint: >
+            /bin/sh -c "
+            mc alias set local http://minio:9000 $${MINIO_ROOT_USER} $${MINIO_ROOT_PASSWORD};
+            mc mb --ignore-existing local/$${MINIO_BUCKET:-glohib-assets};
+            mc anonymous set download local/$${MINIO_BUCKET:-glohib-assets}/public;
+            exit 0;
+            "
+          environment:
+            MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+            MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
+            MINIO_BUCKET: ${MINIO_BUCKET:-glohib-assets}
+          networks:
+            - glohib-net
+
+  # --------------------------------------------------------------------------
+  # LOW - Cleanup / best practice
+  # --------------------------------------------------------------------------
+
+  - id: L1
+    severity: LOW
+    component: root
+    title: "Junk files at project root"
+    files:
+      - "$null"           # empty file, artifact from PowerShell
+      - "-p/"             # directory created by bad mkdir command
+    fix:
+      commands:
+        - 'rm "$null"'
+        - 'rm -rf "./-p"'
+
+  - id: L2
+    severity: LOW
+    component: backend/
+    title: "Deprecated backend/ directory still present"
+    detail: >
+      The monolithic backend/ was replaced by services/ microservices.
+      Still exists with old code. docker-compose.yml does not use it.
+    fix: >
+      Archive or delete: mv backend/ backend.deprecated/
+      Or: rm -rf backend/
+
+# ================================================================================
+# DEPLOYMENT STEPS - DOCKER BUILD & RUN
+# ================================================================================
+
+deployment:
+
+  prerequisites:
+    - "Docker Engine 24+ with Docker Compose v2"
+    - "Go 1.22+ (only needed to generate go.sum files)"
+    - "16GB+ RAM recommended (ML models in scoring/recommendation)"
+
+  step_1_apply_critical_fixes:
+    title: "Fix all CRITICAL blockers before building"
+    commands:
+      # C1: Generate go.sum files
+      - "cd services/identity-service && go mod tidy && cd ../.."
+      - "cd services/student-service && go mod tidy && cd ../.."
+      - "cd services/internship-service && go mod tidy && cd ../.."
+      - "cd services/assessment-service && go mod tidy && cd ../.."
+
+      # C2: Create missing __init__.py
+      - "touch services/recommendation-service/app/__init__.py"
+      - "touch services/recommendation-service/app/api/__init__.py"
+      - "touch services/recommendation-service/app/models/__init__.py"
+      - "touch services/recommendation-service/app/services/__init__.py"
+      - "touch services/scoring-service/app/__init__.py"
+      - "touch services/scoring-service/app/models/__init__.py"
+      - "touch services/scoring-service/app/services/__init__.py"
+      - "touch services/scoring-service/app/utils/__init__.py"
+
+      # C3: Create frontend Dockerfile (see fix above)
+      # H1: Add model-store dir to scoring Dockerfile
+      # H2: Fix MinIO healthcheck in docker-compose.yml
+
+  step_2_configure_environment:
+    title: "Set up .env from template"
+    commands:
+      - "cp .env.example .env"
+      - "# Edit .env - set real values for:"
+      - "#   POSTGRES_PASSWORD (strong random password)"
+      - "#   JWT_SECRET (min 32 chars random string)"
+      - "#   MINIO_ROOT_PASSWORD (strong random password)"
+      - "#   OPENAI_API_KEY (if using AI features)"
+
+  step_3_fix_minio_healthcheck:
+    title: "Fix MinIO health check in docker-compose.yml"
+    file: docker-compose.yml
+    find: |
+      test: ["CMD", "mc", "ready", "local"]
+    replace: |
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:9000/minio/health/live || exit 1"]
+
+  step_4_fix_scoring_modelstore:
+    title: "Add model-store directory to scoring-service Dockerfile"
+    file: services/scoring-service/Dockerfile
+    after_line: "COPY . ."
+    insert: "RUN mkdir -p /app/model-store"
+
+  step_5_build_infrastructure:
+    title: "Start infrastructure services first"
+    commands:
+      - "docker compose up -d postgres redis minio"
+      - "docker compose ps  # verify all 3 are healthy"
+      - "# Wait for postgres healthy before proceeding"
+
+  step_6_build_services:
+    title: "Build and start all application services"
+    commands:
+      - "docker compose build --parallel"
+      - "docker compose up -d"
+
+  step_7_verify:
+    title: "Verify all services are running"
+    commands:
+      - "docker compose ps"
+      - "# Check each service health endpoint:"
+      - "curl http://localhost:8080/health   # identity-service (Go)"
+      - "curl http://localhost:8082/health   # student-service (Go)"
+      - "curl http://localhost:8083/health   # internship-service (Go)"
+      - "curl http://localhost:8084/health   # assessment-service (Go)"
+      - "curl http://localhost:8007/health   # recommendation-service (Python)"
+      - "curl http://localhost:8008/health   # scoring-service (Python)"
+      - "curl http://localhost:4000/health   # video-service (Node.js)"
+
+  step_8_frontend:
+    title: "Build and run frontend (after creating Dockerfile per fix C3)"
+    commands:
+      - "cd frontend/web && docker build -t glohib-frontend ."
+      - "docker run -d -p 3000:3000 --network glohib_glohib-net --name glohib-frontend glohib-frontend"
+      - "curl http://localhost:3000  # verify frontend"
+
+  cleanup_optional:
+    title: "Remove deprecated / junk files"
+    commands:
+      - "rm -rf services/*-svc/           # 9 empty stub directories"
+      - "rm -rf backend/                  # deprecated monolith"
+      - "rm Dockerfile.deprecated         # old root Dockerfile"
+      - "rm docker-compose.fastapi.yml    # uses wrong Dockerfiles"
+      - 'rm "$null" && rm -rf "./-p"      # junk artifacts'
+      - "rm -f docker/Dockerfile.*        # deprecated per-service Dockerfiles"
+
+# ================================================================================
+# PORT MAP
+# ================================================================================
+
+port_map:
+  postgres:             5432
+  redis:                6379
+  minio_api:            9000
+  minio_console:        9001
+  identity_service:     8080
+  identity_grpc:        50051
+  student_service:      8082
+  internship_service:   8083
+  assessment_service:   8084
+  assessment_grpc:      50054
+  recommendation_svc:   8007
+  scoring_service:      8008
+  video_service:        4000
+  frontend:             3000
+
+# ================================================================================
+# SUMMARY
+# ================================================================================
+
+summary:
+  critical_blockers: 3
+  high_issues: 6
+  medium_issues: 6
+  low_issues: 2
+  total: 17
+  must_fix_before_build:
+    - "C1: go mod tidy in all 4 Go services (generates go.sum)"
+    - "C2: touch 8 missing __init__.py in Python services"
+    - "C3: Create frontend/web/Dockerfile"
+  must_fix_before_run:
+    - "H1: Create model-store dir in scoring-service container"
+    - "H2: Fix MinIO healthcheck (mc binary not in minio image)"
+    - "H3: Remove or parameterize hardcoded password in init_postgres.sql"
+    - "H4: Fix alembic.ini DB URL (wrong port, hardcoded password)"

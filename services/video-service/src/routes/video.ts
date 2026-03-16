@@ -7,7 +7,7 @@ import { StorageService } from '../services/storage.js';
 import { TranscoderService } from '../services/transcoder.js';
 import { TranscriptionService } from '../services/transcription.js';
 import { GradingService } from '../services/grading.js';
-import { Video } from '../models/video.js';
+import type { Video } from '../models/video.js';
 
 export default function create(deps: {
   pool: Pool;
@@ -25,17 +25,21 @@ export default function create(deps: {
   // Subscribe to processing queues
   (async () => {
     const sub = deps.redis.duplicate();
-    await sub.subscribe('transcode', async (msg) => {
-      const { videoId, key } = JSON.parse(msg);
-      await transcoder.transcode(videoId, key);
-    });
-    await sub.subscribe('transcribe', async (msg) => {
-      const { videoId, audioKey } = JSON.parse(msg);
-      await transcriber.transcribe(videoId, audioKey);
-    });
-    await sub.subscribe('grade', async (msg) => {
-      const { videoId, text } = JSON.parse(msg);
-      await grader.grade(videoId, text);
+    await sub.subscribe('transcode');
+    await sub.subscribe('transcribe');
+    await sub.subscribe('grade');
+    
+    sub.on('message', async (channel: string, msg: string) => {
+      if (channel === 'transcode') {
+        const { videoId, key } = JSON.parse(msg);
+        await transcoder.transcode(videoId, key);
+      } else if (channel === 'transcribe') {
+        const { videoId, audioKey } = JSON.parse(msg);
+        await transcriber.transcribe(videoId, audioKey);
+      } else if (channel === 'grade') {
+        const { videoId, text } = JSON.parse(msg);
+        await grader.grade(videoId, text);
+      }
     });
   })();
 
@@ -44,9 +48,10 @@ export default function create(deps: {
     try {
       const { rows } = await deps.pool.query('SELECT * FROM videos WHERE id=$1', [req.params.id]);
       if (!rows[0]) return res.status(404).json({ error: 'not found' });
-      res.json(Video.parse(rows[0]));
-    } catch (error) {
-      deps.log.error({ error }, 'Failed to get video');
+      res.json(rows[0] as Video);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      deps.log.error({ error: errorMessage }, 'Failed to get video');
       res.status(500).json({ error: 'Failed to get video' });
     }
   });
@@ -58,8 +63,9 @@ export default function create(deps: {
       if (!key) return res.status(400).json({ error: 'upload not ready' });
       await deps.redis.publish('transcode', JSON.stringify({ videoId: req.params.id, key }));
       res.json({ status: 'transcoding started' });
-    } catch (error) {
-      deps.log.error({ error }, 'Failed to start transcode');
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      deps.log.error({ error: errorMessage }, 'Failed to start transcode');
       res.status(500).json({ error: 'Failed to start transcode' });
     }
   });
@@ -73,8 +79,9 @@ export default function create(deps: {
         3600
       );
       res.json({ upload_url: url });
-    } catch (error) {
-      deps.log.error({ error }, 'Failed to get upload URL');
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      deps.log.error({ error: errorMessage }, 'Failed to get upload URL');
       res.status(500).json({ error: 'Failed to get upload URL' });
     }
   });

@@ -1,0 +1,569 @@
+# =============================================================================
+# GlohibAI — Atomic Docker Deployment Steps for Qwen/OpenCode
+# Project: C:/Users/UCHE/my-qwen-project/PROJECTS/GlohibAI
+# Generated: 2026-03-15 (v2 — clean fresh review)
+# Rule: ONE task per step. NO compound commands. TINY BITS.
+# Docker: SLOW machine — optimize build context + build one service at a time
+# =============================================================================
+
+project:
+  name: GlohibAI
+  root: C:/Users/UCHE/my-qwen-project/PROJECTS/GlohibAI
+  size: 919MB (mostly node_modules — without .dockerignore, ALL sent to Docker every build)
+  services:
+    go: [identity-service, student-service, internship-service, assessment-service]
+    python: [recommendation-service, scoring-service]
+    node: [video-service]
+    frontend: [frontend/web]
+  infrastructure: [postgres (pgvector), redis, minio]
+  init_containers: [migrations, minio-init]
+
+# =============================================================================
+# STATUS: 95% READY — Previous fixes from v1 YAML were all applied
+# =============================================================================
+
+already_fixed:
+  - "go.sum files exist for all 4 Go services"
+  - "All Go Dockerfiles copy go.sum (COPY go.mod go.sum ./)"
+  - "internship-service Dockerfile matches go 1.23 from go.mod"
+  - "video-service package-lock.json exists"
+  - "Frontend is in docker-compose.yml with Dockerfile"
+  - "Database migrations runner (scripts/run-migrations.sh) works"
+  - "MinIO bucket init container configured"
+  - "Python __init__.py files all present"
+
+# =============================================================================
+# BLOCK A — FIX ERRORS (do ALL of these before ANY docker build)
+# =============================================================================
+
+block_a_errors:
+
+  - id: A1
+    title: "Fix identity-service go.sum — incomplete checksums"
+    severity: HIGH
+    file: services/identity-service/go.sum
+    problem: |
+      Only 11 lines — has ONLY go.mod hashes, missing module download hashes
+      and ALL transitive dependency hashes. Compare to student-service (191 lines).
+      go mod download will work but Docker layer caching is broken.
+    action: |
+      Run this command from the project root:
+        docker run --rm -v "$(pwd)/services/identity-service:/app" -w /app golang:1.22-alpine go mod tidy
+    fallback: |
+      If Go is installed locally:
+        cd services/identity-service
+        go mod tidy
+    verify: |
+      The go.sum file should have 100+ lines with BOTH formats:
+        github.com/gin-gonic/gin v1.9.1 h1:4idE...     (module hash)
+        github.com/gin-gonic/gin v1.9.1/go.mod h1:hPrL... (go.mod hash)
+
+  - id: A2
+    title: "Add API_STUDENT to frontend next.config.js"
+    severity: MEDIUM
+    file: frontend/web/next.config.js
+    problem: |
+      next.config.js env block is missing API_STUDENT. The docker-compose.yml
+      passes API_STUDENT as a runtime env var, but Next.js needs it in the
+      env config to make it available in client-side code. Without this,
+      any page that calls the student service from the browser will fail.
+    action: |
+      In frontend/web/next.config.js, change the env block from:
+        env: {
+          API_IDENTITY: process.env.API_IDENTITY || 'http://localhost:8080',
+          API_INTERNSHIP: process.env.API_INTERNSHIP || 'http://localhost:8083',
+          API_RECOMMENDATION: process.env.API_RECOMMENDATION || 'http://localhost:8007',
+          API_VIDEO: process.env.API_VIDEO || 'http://localhost:4000',
+        },
+      To:
+        env: {
+          API_IDENTITY: process.env.API_IDENTITY || 'http://localhost:8080',
+          API_STUDENT: process.env.API_STUDENT || 'http://localhost:8082',
+          API_INTERNSHIP: process.env.API_INTERNSHIP || 'http://localhost:8083',
+          API_RECOMMENDATION: process.env.API_RECOMMENDATION || 'http://localhost:8007',
+          API_VIDEO: process.env.API_VIDEO || 'http://localhost:4000',
+        },
+
+  - id: A3
+    title: "Fix frontend Dockerfile — remove invalid npm flag"
+    severity: MEDIUM
+    file: frontend/web/Dockerfile
+    problem: |
+      Line 4: `npm ci --frozen-lockfile` — `--frozen-lockfile` is a Yarn flag,
+      not npm. npm ci already does frozen installs inherently. npm may warn
+      or error on the unknown flag depending on version.
+    action: |
+      Change line 4 from:
+        RUN npm ci --frozen-lockfile
+      To:
+        RUN npm ci
+
+# =============================================================================
+# BLOCK B — DOCKER PERFORMANCE (critical for slow Docker)
+# These reduce build time from 10+ minutes to 2-3 minutes per service
+# =============================================================================
+
+block_b_performance:
+
+  - id: B1
+    title: "Create .dockerignore at project root"
+    severity: CRITICAL-PERFORMANCE
+    file: .dockerignore
+    problem: |
+      No .dockerignore exists. The project is 919MB. Every `docker build` for
+      every service sends ALL 919MB to the Docker daemon. On a slow machine,
+      this adds minutes to every build. Services only need their own directory.
+    action: |
+      Create NEW file .dockerignore at project root with this content:
+
+        # Exclude everything not needed for builds
+        .git
+        .github
+        node_modules
+        **/node_modules
+        logs
+        docs
+        forensics
+        extracted_intelligence
+        source_docs
+        planning_output
+        system_context
+        kimi_bridge
+        tests
+        clauderefix
+        infrastructure
+        scripts
+        docker
+        *.md
+        *.txt
+        *.pptx.txt
+        .env*
+        !.env
+        docker-compose*.yml
+        Makefile
+        Dockerfile.migration
+        alembic.ini
+        package.json
+        tsconfig.json
+        requirements.txt
+        kimi_*
+        -p
+        $null
+
+  - id: B2
+    title: "Create .dockerignore for identity-service"
+    severity: HIGH-PERFORMANCE
+    file: services/identity-service/.dockerignore
+    action: |
+      Create NEW file with:
+        .git
+        *.md
+        .env*
+        Dockerfile
+
+  - id: B3
+    title: "Create .dockerignore for student-service"
+    severity: HIGH-PERFORMANCE
+    file: services/student-service/.dockerignore
+    action: |
+      Create NEW file with:
+        .git
+        *.md
+        .env*
+        Dockerfile
+
+  - id: B4
+    title: "Create .dockerignore for internship-service"
+    severity: HIGH-PERFORMANCE
+    file: services/internship-service/.dockerignore
+    action: |
+      Create NEW file with:
+        .git
+        *.md
+        .env*
+        Dockerfile
+
+  - id: B5
+    title: "Create .dockerignore for assessment-service"
+    severity: HIGH-PERFORMANCE
+    file: services/assessment-service/.dockerignore
+    action: |
+      Create NEW file with:
+        .git
+        *.md
+        .env*
+        Dockerfile
+
+  - id: B6
+    title: "Create .dockerignore for recommendation-service"
+    severity: HIGH-PERFORMANCE
+    file: services/recommendation-service/.dockerignore
+    action: |
+      Create NEW file with:
+        .git
+        *.md
+        .env*
+        __pycache__
+        *.pyc
+        .pytest_cache
+        Dockerfile
+
+  - id: B7
+    title: "Create .dockerignore for scoring-service"
+    severity: HIGH-PERFORMANCE
+    file: services/scoring-service/.dockerignore
+    action: |
+      Create NEW file with:
+        .git
+        *.md
+        .env*
+        __pycache__
+        *.pyc
+        .pytest_cache
+        model-store
+        Dockerfile
+
+  - id: B8
+    title: "Create .dockerignore for video-service"
+    severity: HIGH-PERFORMANCE
+    file: services/video-service/.dockerignore
+    action: |
+      Create NEW file with:
+        .git
+        *.md
+        .env*
+        node_modules
+        dist
+        Dockerfile
+
+  - id: B9
+    title: "Create .dockerignore for frontend"
+    severity: HIGH-PERFORMANCE
+    file: frontend/web/.dockerignore
+    action: |
+      Create NEW file with:
+        .git
+        *.md
+        .env*
+        node_modules
+        .next
+        Dockerfile
+
+# =============================================================================
+# BLOCK C — CLEANUP (optional but reduces confusion)
+# =============================================================================
+
+block_c_cleanup:
+
+  - id: C1
+    title: "Delete empty stub directory services/analytics-svc"
+    severity: LOW
+    action: "Delete the directory: services/analytics-svc/"
+
+  - id: C2
+    title: "Delete empty stub directory services/assessment-svc"
+    severity: LOW
+    action: "Delete the directory: services/assessment-svc/"
+
+  - id: C3
+    title: "Delete empty stub directory services/identity-svc"
+    severity: LOW
+    action: "Delete the directory: services/identity-svc/"
+
+  - id: C4
+    title: "Delete empty stub directory services/internship-svc"
+    severity: LOW
+    action: "Delete the directory: services/internship-svc/"
+
+  - id: C5
+    title: "Delete empty stub directory services/mentor-svc"
+    severity: LOW
+    action: "Delete the directory: services/mentor-svc/"
+
+  - id: C6
+    title: "Delete empty stub directory services/recommendation-svc"
+    severity: LOW
+    action: "Delete the directory: services/recommendation-svc/"
+
+  - id: C7
+    title: "Delete empty stub directory services/scoring-svc"
+    severity: LOW
+    action: "Delete the directory: services/scoring-svc/"
+
+  - id: C8
+    title: "Delete empty stub directory services/student-svc"
+    severity: LOW
+    action: "Delete the directory: services/student-svc/"
+
+  - id: C9
+    title: "Delete empty stub directory services/video-svc"
+    severity: LOW
+    action: "Delete the directory: services/video-svc/"
+
+  - id: C10
+    title: "Delete junk file at project root"
+    severity: LOW
+    action: "Delete the file: $null"
+
+  - id: C11
+    title: "Delete junk directory at project root"
+    severity: LOW
+    action: "Delete the directory: -p/"
+
+  - id: C12
+    title: "Delete deprecated migration Dockerfile"
+    severity: LOW
+    action: "Delete the file: Dockerfile.migration"
+
+# =============================================================================
+# BLOCK D — DOCKER DEPLOYMENT (one service at a time for slow Docker)
+# Run ONLY after blocks A and B are complete
+# =============================================================================
+
+deployment_instructions: |
+  IMPORTANT: Docker is slow on this machine. Build ONE image at a time.
+  Do NOT run `docker compose build` (builds all at once, may OOM or timeout).
+  Do NOT run `docker compose up --build` (same problem).
+  Follow the steps below in EXACT order. Wait for each to finish.
+
+deployment:
+
+  # --- PHASE 1: Infrastructure (pull images, no build needed) ---
+
+  - id: D1
+    title: "Pull postgres image"
+    command: "docker pull pgvector/pgvector:pg16"
+    note: "~400MB download. Wait for it to finish."
+
+  - id: D2
+    title: "Pull redis image"
+    command: "docker pull redis:7-alpine"
+    note: "~30MB download."
+
+  - id: D3
+    title: "Pull minio image"
+    command: "docker pull minio/minio:latest"
+    note: "~200MB download."
+
+  - id: D4
+    title: "Pull minio/mc image (for bucket init)"
+    command: "docker pull minio/mc:latest"
+    note: "~30MB download."
+
+  - id: D5
+    title: "Pull postgres alpine (for migrations)"
+    command: "docker pull postgres:16-alpine"
+    note: "~80MB download."
+
+  - id: D6
+    title: "Start PostgreSQL"
+    command: "docker compose up -d postgres"
+    verify: "docker compose ps postgres"
+    expected: "healthy"
+
+  - id: D7
+    title: "Start Redis"
+    command: "docker compose up -d redis"
+    verify: "docker compose ps redis"
+    expected: "healthy"
+
+  - id: D8
+    title: "Start MinIO"
+    command: "docker compose up -d minio"
+    verify: "docker compose ps minio"
+    expected: "healthy"
+
+  # --- PHASE 2: Init containers ---
+
+  - id: D9
+    title: "Run database migrations"
+    command: "docker compose up migrations"
+    expected: "'All migrations applied.' in output"
+    note: "This runs and exits. Wait for it to finish."
+
+  - id: D10
+    title: "Run MinIO bucket creation"
+    command: "docker compose up minio-init"
+    expected: "Bucket created or already exists."
+
+  # --- PHASE 3: Build + start Go services (one at a time) ---
+
+  - id: D11
+    title: "Build identity-service image"
+    command: "docker compose build identity-service"
+    note: "First Go build downloads Go modules. May take 3-5 minutes."
+
+  - id: D12
+    title: "Start identity-service"
+    command: "docker compose up -d identity-service"
+    verify: "docker compose ps identity-service"
+    expected: "healthy (wait 30-60 seconds)"
+
+  - id: D13
+    title: "Build student-service image"
+    command: "docker compose build student-service"
+    note: "Faster — shares Go base image cache with identity-service."
+
+  - id: D14
+    title: "Start student-service"
+    command: "docker compose up -d student-service"
+    verify: "docker compose ps student-service"
+    expected: "healthy"
+
+  - id: D15
+    title: "Build internship-service image"
+    command: "docker compose build internship-service"
+    note: "Uses golang:1.23-alpine (different from others). May need fresh download."
+
+  - id: D16
+    title: "Start internship-service"
+    command: "docker compose up -d internship-service"
+    verify: "docker compose ps internship-service"
+    expected: "healthy"
+
+  - id: D17
+    title: "Build assessment-service image"
+    command: "docker compose build assessment-service"
+
+  - id: D18
+    title: "Start assessment-service"
+    command: "docker compose up -d assessment-service"
+    verify: "docker compose ps assessment-service"
+    expected: "healthy"
+
+  # --- PHASE 4: Build + start Python services ---
+
+  - id: D19
+    title: "Build recommendation-service image"
+    command: "docker compose build recommendation-service"
+    note: "Downloads sentence-transformers, PyTorch, etc. May take 5-10 minutes."
+
+  - id: D20
+    title: "Start recommendation-service"
+    command: "docker compose up -d recommendation-service"
+    verify: "docker compose ps recommendation-service"
+    expected: "healthy (start_period is 30s — may take up to 60s)"
+
+  - id: D21
+    title: "Build scoring-service image"
+    command: "docker compose build scoring-service"
+    note: "Downloads XGBoost, SHAP, etc. May take 5-10 minutes."
+
+  - id: D22
+    title: "Start scoring-service"
+    command: "docker compose up -d scoring-service"
+    verify: "docker compose ps scoring-service"
+    expected: "healthy"
+
+  # --- PHASE 5: Build + start Node service ---
+
+  - id: D23
+    title: "Build video-service image"
+    command: "docker compose build video-service"
+    note: "Multi-stage build with ffmpeg. May take 3-5 minutes."
+
+  - id: D24
+    title: "Start video-service"
+    command: "docker compose up -d video-service"
+    verify: "docker compose ps video-service"
+    expected: "healthy"
+
+  # --- PHASE 6: Build + start Frontend ---
+
+  - id: D25
+    title: "Build frontend image"
+    command: "docker compose build frontend"
+    note: "Next.js build. May take 3-5 minutes."
+
+  - id: D26
+    title: "Start frontend"
+    command: "docker compose up -d frontend"
+    verify: "docker compose ps frontend"
+    expected: "healthy (start_period is 30s)"
+
+  # --- PHASE 7: Final verification ---
+
+  - id: D27
+    title: "Verify all containers running"
+    command: "docker compose ps"
+    expected: |
+      All services show "Up" or "healthy":
+        glohib-postgres         healthy
+        glohib-redis            healthy
+        glohib-minio            healthy
+        glohib-identity-service healthy
+        glohib-student-service  healthy
+        glohib-internship-service healthy
+        glohib-assessment-service healthy
+        glohib-recommendation-service healthy
+        glohib-scoring-service  healthy
+        glohib-video-service    healthy
+        glohib-frontend         healthy
+
+  - id: D28
+    title: "Test identity-service health"
+    command: "curl -s http://localhost:8080/health"
+    expected: "JSON response with status ok"
+
+  - id: D29
+    title: "Test frontend loads"
+    command: "curl -s -o /dev/null -w '%{http_code}' http://localhost:3000"
+    expected: "200"
+
+  - id: D30
+    title: "Open in browser"
+    command: "Open http://localhost:3000 in your browser"
+    expected: "GlohibAI student internship matching platform"
+
+# =============================================================================
+# TROUBLESHOOTING — If a service fails to build or start
+# =============================================================================
+
+troubleshooting:
+
+  build_fails:
+    - "Check logs: docker compose logs <service-name>"
+    - "Check build: docker compose build --no-cache <service-name>"
+    - "Go services: if go.sum error, delete go.sum and run go mod tidy (see A1)"
+    - "Python services: if pip install fails, check requirements.txt versions"
+    - "Node services: if npm install fails, delete package-lock.json and run npm install"
+
+  service_unhealthy:
+    - "Check logs: docker compose logs --tail=50 <service-name>"
+    - "Common: service starts but DB connection fails → check postgres is healthy first"
+    - "Common: 'connection refused' → check depends_on and service_healthy conditions"
+    - "Recommendation/scoring: 30s+ start time is normal (loading ML models)"
+
+  docker_slow:
+    - "MOST IMPORTANT: Apply Block B (.dockerignore files) before building"
+    - "Build one service at a time (follow D11-D26 order)"
+    - "If out of disk: docker system prune -f"
+    - "If out of memory: close other applications, increase Docker memory limit"
+
+# =============================================================================
+# PORT MAP — Access these after deployment
+# =============================================================================
+
+ports:
+  frontend: "http://localhost:3000"
+  identity_service: "http://localhost:8080"
+  student_service: "http://localhost:8082"
+  internship_service: "http://localhost:8083"
+  assessment_service: "http://localhost:8084"
+  recommendation_service: "http://localhost:8007"
+  scoring_service: "http://localhost:8008"
+  video_service: "http://localhost:4000"
+  minio_console: "http://localhost:9011"
+
+# =============================================================================
+# CONSTRAINTS
+# =============================================================================
+
+constraints:
+  - All work scoped to C:/Users/UCHE/my-qwen-project/PROJECTS/GlohibAI
+  - ONE task per step
+  - Build ONE Docker image at a time (slow machine)
+  - Do NOT run 'docker compose up --build' (builds everything at once)
+  - Do NOT run 'docker compose build' without specifying a service
+  - Wait for each service to be healthy before starting the next
+  - Test after each phase before moving on

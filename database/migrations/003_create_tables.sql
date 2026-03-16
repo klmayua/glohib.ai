@@ -2,13 +2,37 @@
 -- Glohib.ai Core Tables
 
 -- ================================================================================
+-- AUTH & USER TABLES
+-- ================================================================================
+
+CREATE TABLE IF NOT EXISTS users (
+    id            uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+    email         citext NOT NULL UNIQUE,
+    password_hash text   NOT NULL,
+    roles         text[] NOT NULL DEFAULT '{student}',
+    provider      text   NOT NULL DEFAULT 'local',
+    provider_id   text,
+    created_at    timestamptz NOT NULL DEFAULT now(),
+    updated_at    timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS api_keys (
+    id            uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id       uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    key_hash      text NOT NULL UNIQUE,
+    created_at    timestamptz NOT NULL DEFAULT now()
+);
+
+-- ================================================================================
 -- STAKEHOLDER TABLES
 -- ================================================================================
 
 CREATE TABLE IF NOT EXISTS students (
     id            uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id       uuid NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
     email         citext NOT NULL UNIQUE,
-    password_hash text   NOT NULL,
+    first_name    text,
+    last_name     text,
     profile_vector vector(512),
     created_at    timestamptz NOT NULL DEFAULT now()
 );
@@ -46,6 +70,8 @@ CREATE TABLE IF NOT EXISTS institutions (
 CREATE TABLE IF NOT EXISTS internships (
     id          uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
     employer_id uuid NOT NULL REFERENCES employers(id) ON DELETE CASCADE,
+    title       text NOT NULL,
+    description text,
     metadata    jsonb NOT NULL DEFAULT '{}',
     vector      vector(512),
     active      boolean NOT NULL DEFAULT true,
@@ -54,7 +80,26 @@ CREATE TABLE IF NOT EXISTS internships (
     CHECK (expires_at IS NULL OR expires_at > created_at)
 );
 
--- Partitioned assessments table (by month)
+-- Skills table
+CREATE TABLE IF NOT EXISTS skills (
+    id            uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+    student_id    uuid NOT NULL REFERENCES students(id) ON DELETE CASCADE,
+    name          text NOT NULL,
+    proficiency   int CHECK (proficiency BETWEEN 1 AND 5),
+    category      text,
+    created_at    timestamptz NOT NULL DEFAULT now()
+);
+
+-- Student vectors table
+CREATE TABLE IF NOT EXISTS student_vectors (
+    id            uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+    student_id    uuid NOT NULL UNIQUE REFERENCES students(id) ON DELETE CASCADE,
+    embedding     vector(512),
+    created_at    timestamptz NOT NULL DEFAULT now(),
+    updated_at    timestamptz NOT NULL DEFAULT now()
+);
+
+-- Assessments table (simplified - no partitioning for now)
 CREATE TABLE IF NOT EXISTS assessments (
     id          uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
     student_id  uuid NOT NULL REFERENCES students(id) ON DELETE CASCADE,
@@ -64,27 +109,7 @@ CREATE TABLE IF NOT EXISTS assessments (
     pass        boolean,
     ai_explain  text,
     created_at  timestamptz NOT NULL DEFAULT now()
-) PARTITION BY RANGE (date_trunc('month', created_at));
-
--- Create monthly partitions for 2 years ahead
-DO $$
-DECLARE
-    start_date date := date_trunc('month', CURRENT_DATE);
-    end_date   date := start_date + interval '24 months';
-    month_ts   timestamptz;
-BEGIN
-    FOR month_ts IN
-        SELECT generate_series(start_date, end_date, interval '1 month')
-    LOOP
-        EXECUTE format(
-            $$ CREATE TABLE IF NOT EXISTS assessments_y%m PARTITION OF assessments
-                 FOR VALUES FROM (%L) TO (%L) $$,
-            to_char(month_ts, 'YYYY_MM'),
-            month_ts,
-            month_ts + interval '1 month'
-        );
-    END LOOP;
-END $$;
+);
 
 CREATE TABLE IF NOT EXISTS video_submissions (
     id             uuid PRIMARY KEY DEFAULT uuid_generate_v4(),

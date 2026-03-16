@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useLogin } from '@/hooks/use-auth'
 import { motion } from 'framer-motion'
+import { Sparkles, Mail, Lock, ArrowRight, Github, Chrome } from 'lucide-react'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -26,74 +27,160 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center px-4">
+    <div className="min-h-screen bg-slate-950 animated-gradient noise-overlay relative overflow-hidden flex items-center justify-center px-4">
+      {/* Background Elements */}
+      <div className="absolute inset-0 grid-pattern opacity-50" />
+      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-cyan-500/10 rounded-full blur-[128px]" />
+      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-blue-600/10 rounded-full blur-[128px]" />
+
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="max-w-md w-full"
+        transition={{ duration: 0.5 }}
+        className="relative z-10 max-w-md w-full"
       >
-        <div className="bg-white rounded-2xl shadow-xl p-8">
+        {/* Logo */}
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="text-center mb-8"
+        >
+          <Link href="/" className="inline-flex items-center gap-2">
+            <div className="w-12 h-12 rounded-sm bg-gradient-to-br from-cyan-400 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/25">
+              <Sparkles className="w-6 h-6 text-white" />
+            </div>
+            <span className="text-3xl font-bold text-white">
+              Glohib<span className="text-cyan-400">.ai</span>
+            </span>
+          </Link>
+        </motion.div>
+
+        {/* Login Card */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="glass-card rounded-sm p-8"
+        >
           <div className="text-center mb-8">
-            <Link href="/" className="text-3xl font-bold text-indigo-600">
-              Glohib.ai
-            </Link>
-            <h1 className="text-2xl font-bold text-gray-900 mt-4">Welcome Back</h1>
-            <p className="text-gray-600 mt-2">Sign in to your account</p>
+            <h1 className="text-2xl font-bold text-white mb-2">Welcome Back</h1>
+            <p className="text-slate-400">Sign in to continue your journey</p>
+          </div>
+
+          {/* Social Login */}
+          <div className="grid grid-cols-2 gap-3 mb-6">
+            <button className="glass-button-secondary py-2.5 rounded-sm flex items-center justify-center gap-2 text-sm">
+              <Chrome className="w-5 h-5" />
+              Google
+            </button>
+            <button className="glass-button-secondary py-2.5 rounded-sm flex items-center justify-center gap-2 text-sm">
+              <Github className="w-5 h-5" />
+              GitHub
+            </button>
+          </div>
+
+          <div className="relative mb-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-white/10" />
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-slate-900/50 text-slate-500">Or continue with</span>
+            </div>
           </div>
 
           {error && (
-            <div className="bg-red-50 text-red-600 p-4 rounded-lg mb-6">
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-sm mb-6 text-sm"
+            >
               {error}
-            </div>
+            </motion.div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                Email
+              <label htmlFor="email" className="block text-sm font-medium text-slate-300 mb-2">
+                Email Address
               </label>
-              <input
-                id="email"
-                type="email"
-                required
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                placeholder="you@example.com"
-              />
+              <div className="relative">
+                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
+                <input
+                  id="email"
+                  type="email"
+                  required
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/10 rounded-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all"
+                  placeholder="you@example.com"
+                />
+              </div>
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="password" className="block text-sm font-medium text-slate-300 mb-2">
                 Password
               </label>
-              <input
-                id="password"
-                type="password"
-                required
-                value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                placeholder="••••••••"
-              />
+              <div className="relative">
+                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
+                <input
+                  id="password"
+                  type="password"
+                  required
+                  value={formData.password}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/10 rounded-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all"
+                  placeholder="••••••••"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between text-sm">
+              <label className="flex items-center gap-2 text-slate-400 cursor-pointer">
+                <input type="checkbox" className="rounded bg-white/5 border-white/10 text-cyan-500 focus:ring-cyan-500/50" />
+                Remember me
+              </label>
+              <Link href="/forgot-password" className="text-cyan-400 hover:text-cyan-300 transition-colors">
+                Forgot password?
+              </Link>
             </div>
 
             <button
               type="submit"
               disabled={loginMutation.isPending}
-              className="w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 transition disabled:opacity-50"
+              className="w-full glass-button py-3.5 rounded-sm font-semibold flex items-center justify-center gap-2 disabled:opacity-50"
             >
-              {loginMutation.isPending ? 'Signing in...' : 'Sign In'}
+              {loginMutation.isPending ? (
+                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              ) : (
+                <>
+                  Sign In
+                  <ArrowRight className="w-5 h-5" />
+                </>
+              )}
             </button>
           </form>
 
-          <p className="text-center text-gray-600 mt-6">
+          <p className="text-center text-slate-400 mt-6 text-sm">
             Don't have an account?{' '}
-            <Link href="/register" className="text-indigo-600 font-semibold hover:underline">
-              Sign up
+            <Link href="/register" className="text-cyan-400 font-semibold hover:text-cyan-300 transition-colors">
+              Create one
             </Link>
           </p>
-        </div>
+        </motion.div>
+
+        {/* Back to Home */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5 }}
+          className="text-center mt-6"
+        >
+          <Link href="/" className="text-slate-500 hover:text-slate-300 transition-colors text-sm">
+            ← Back to home
+          </Link>
+        </motion.div>
       </motion.div>
     </div>
   )
