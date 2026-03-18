@@ -1,0 +1,54 @@
+# PAGE INTEGRITY CHECKLIST
+# MUST be validated before any deployment
+
+## Global Checks
+- [ ] No console errors in production
+- [ ] No broken routes (404s)
+- [ ] No dead buttons (buttons with no action)
+- [ ] No placeholder/demo data visible
+- [ ] Responsive layout valid on mobile/tablet/desktop
+
+## Dashboard Page
+- [ ] Page loads without error
+- [ ] Stats cards show real data
+- [ ] All stat cards are clickable
+- [ ] Applications section renders correctly
+- [ ] AI Panel shows real match percentage
+- [ ] Recommended internships render
+
+## Internships Page
+- [ ] Page loads without error
+- [ ] Search bar is prominent
+- [ ] Filters are functional (not visual only)
+- [ ] Internship cards are consistent
+- [ ] Apply button triggers API call
+- [ ] View button opens job details
+
+## Applications Page
+- [ ] Page loads without error
+- [ ] Status tags are present (applied, under_review, etc.)
+- [ ] Empty state has clear CTA
+- [ ] Application cards are clickable
+
+## Recommendations Page
+- [ ] Page loads without error
+- [ ] Match percentage is real (not static)
+- [ ] Explanation tooltip exists
+- [ ] Recommendations are personalized
+
+## Profile Page
+- [ ] Page loads without error
+- [ ] Info grid is aligned properly
+- [ ] Edit button opens edit modal/page
+- [ ] Upload Resume button works
+- [ ] Completion progress bar shows
+
+## Validation Rules
+BEFORE modifying any page:
+  - must_read_checklist: true
+
+AFTER modifying any page:
+  - must_update_checklist: true
+
+IF checklist fails:
+  - rollback_changes: true

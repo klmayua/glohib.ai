@@ -17,11 +17,13 @@ func NewHelper(cfg *config.JWTConfig) *Helper {
 }
 
 func (h *Helper) GenerateTokens(userID string, roles []string) (*models.TokenPair, error) {
+	accessExpiry := time.Duration(h.cfg.AccessExpiry) * time.Minute
+	
 	accessClaims := models.Claims{
 		UserID: userID,
 		Roles:  roles,
 		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Duration(h.cfg.AccessExpiry) * time.Minute)),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(accessExpiry)),
 			ID:        uuid.NewString(),
 		},
 	}

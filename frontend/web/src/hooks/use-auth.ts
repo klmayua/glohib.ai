@@ -8,12 +8,21 @@ import { useRouter } from 'next/navigation'
 export function useLogin() {
   const router = useRouter()
   const login = useAuthStore((state) => state.login)
+  const queryClient = useQueryClient()
 
   return useMutation({
     mutationFn: authAPI.login,
     onSuccess: (response) => {
-      const { tokens } = response.data
-      login({ id: tokens.user_id, email: response.data.email, roles: [] }, tokens.access_token)
+      const { user, tokens } = response.data
+      // Store user info (token is in httpOnly cookie)
+      login({
+        id: user.id,
+        email: user.email,
+        roles: user.roles || ['student']
+      })
+      // Invalidate any existing queries
+      queryClient.invalidateQueries({ queryKey: ['currentUser'] })
+      // Navigate to dashboard
       router.push('/dashboard')
     },
   })

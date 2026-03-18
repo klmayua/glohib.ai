@@ -87,12 +87,13 @@ func (h *OAuthHandler) GoogleCallback(c *gin.Context) {
 	}
 
 	var user models.User
+	var role string
 	err = h.db.QueryRow(c, `
-		SELECT id, email, roles FROM users WHERE provider=$1 AND provider_id=$2
-	`, "google", googleUser.ID).Scan(&user.ID, &user.Email, &user.Roles)
+		SELECT id, email, role FROM users WHERE provider=$1 AND provider_id=$2
+	`, "google", googleUser.ID).Scan(&user.ID, &user.Email, &role)
 	if err != nil {
 		user = models.User{
-			ID:         uuid.New(),
+			ID:         generateID(),
 			Email:      googleUser.Email,
 			Roles:      []string{"student"},
 			Provider:   "google",
@@ -101,24 +102,25 @@ func (h *OAuthHandler) GoogleCallback(c *gin.Context) {
 			UpdatedAt:  time.Now(),
 		}
 		_, err = h.db.Exec(c, `
-			INSERT INTO users (id, email, roles, provider, provider_id, created_at, updated_at)
+			INSERT INTO users (id, email, role, provider, provider_id, created_at, updated_at)
 			VALUES ($1, $2, $3, $4, $5, $6, $7)
-		`, user.ID, user.Email, user.Roles, user.Provider, user.ProviderID, user.CreatedAt, user.UpdatedAt)
+		`, user.ID, user.Email, user.Roles[0], user.Provider, user.ProviderID, user.CreatedAt, user.UpdatedAt)
 		if err != nil {
 			logger.Error("insert google user failed", zap.Error(err))
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "create user failed"})
 			return
 		}
 	}
+	user.Roles = []string{role}
 
-	tokens, err := h.jwt.GenerateTokens(user.ID.String(), user.Roles)
+	tokens, err := h.jwt.GenerateTokens(user.ID, user.Roles)
 	if err != nil {
 		logger.Error("generate tokens failed", zap.Error(err))
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal error"})
 		return
 	}
 
-	h.redis.Set(c, "refresh:"+tokens.RefreshToken, user.ID.String(), time.Duration(h.cfg.JWT.RefreshExpiry)*24*time.Hour)
+	h.redis.Set(c, "refresh:"+tokens.RefreshToken, user.ID, time.Duration(h.cfg.JWT.RefreshExpiry)*24*time.Hour)
 
 	c.JSON(http.StatusOK, gin.H{"tokens": tokens})
 }

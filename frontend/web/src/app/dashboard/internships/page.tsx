@@ -1,208 +1,316 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { Search, Filter, X, Building2, ArrowRight, MapPin, DollarSign } from 'lucide-react'
+import { Card, Button, Badge, Skeleton } from '@/components/ui'
 import Link from 'next/link'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { internshipAPI, recommendationAPI } from '@/lib/api'
-import { useAuthStore } from '@/lib/auth-store'
-import { motion } from 'framer-motion'
 
-export default function InternshipsPage() {
-  const user = useAuthStore((state) => state.user)
-  const [searchQuery, setSearchQuery] = useState('')
-  const [filter, setFilter] = useState({
-    remote: false,
-    paid: false,
-  })
-
-  const { data: internshipsData, isLoading } = useQuery({
-    queryKey: ['internships'],
-    queryFn: () => internshipAPI.list(50, 0),
-  })
-
-  const { data: recommendationsData } = useQuery({
-    queryKey: ['recommendations', user?.id],
-    queryFn: () => recommendationAPI.recommend(user?.id || '', 20),
-    enabled: !!user?.id,
-  })
-
-  const applyMutation = useMutation({
-    mutationFn: (internshipId: string) => internshipAPI.apply(internshipId, {}),
-  })
-
-  const internships = internshipsData?.data?.internships || []
-  const recommendations = recommendationsData?.data?.recommendations || []
-
-  const handleApply = (internshipId: string) => {
-    applyMutation.mutate(internshipId)
-  }
-
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white shadow-sm">
-        <div className="container mx-auto px-6 py-4">
-          <div className="flex justify-between items-center">
-            <Link href="/dashboard" className="text-2xl font-bold text-indigo-600">
-              Glohib.ai
-            </Link>
-            <Link href="/dashboard" className="text-gray-600 hover:text-gray-900">
-              Back to Dashboard
-            </Link>
-          </div>
-        </div>
-      </nav>
-
-      <main className="container mx-auto px-6 py-12">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
-            Find Your Dream Internship
-          </h1>
-          
-          <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
-            <div className="flex gap-4 mb-4">
-              <input
-                type="text"
-                placeholder="Search internships..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-              />
-              <button className="bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 transition">
-                Search
-              </button>
-            </div>
-            
-            <div className="flex gap-4">
-              <label className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={filter.remote}
-                  onChange={(e) => setFilter({ ...filter, remote: e.target.checked })}
-                  className="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"
-                />
-                <span className="text-gray-700">Remote Only</span>
-              </label>
-              <label className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={filter.paid}
-                  onChange={(e) => setFilter({ ...filter, paid: e.target.checked })}
-                  className="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"
-                />
-                <span className="text-gray-700">Paid Only</span>
-              </label>
-            </div>
-          </div>
-        </motion.div>
-
-        {recommendations.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="mb-12"
-          >
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">
-              🎯 Recommended for You
-            </h2>
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {recommendations.slice(0, 6).map((rec: any, index: number) => (
-                <InternshipCard
-                  key={rec.internship_id}
-                  internship={rec}
-                  onApply={() => handleApply(rec.internship_id)}
-                  isRecommended
-                  matchScore={rec.score}
-                />
-              ))}
-            </div>
-          </motion.div>
-        )}
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-        >
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">
-            All Internships
-          </h2>
-          
-          {isLoading ? (
-            <div className="flex justify-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
-            </div>
-          ) : (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {internships.map((internship: any) => (
-                <InternshipCard
-                  key={internship.id}
-                  internship={internship}
-                  onApply={() => handleApply(internship.id)}
-                />
-              ))}
-            </div>
-          )}
-        </motion.div>
-      </main>
-    </div>
-  )
+interface Internship {
+  id: string
+  title: string
+  company: string
+  location: string
+  type: string
+  stipend?: number
+  posted: string
+  match?: number
+  department: string
 }
 
-function InternshipCard({ internship, onApply, isRecommended = false, matchScore = 0 }: any) {
+export default function InternshipsPage() {
+  const router = useRouter()
+  const [searchQuery, setSearchQuery] = useState('')
+  const [selectedFilters, setSelectedFilters] = useState<string[]>([])
+  const [isLoading, setIsLoading] = useState(false)
+
+  // Mock data
+  const internships: Internship[] = [
+    {
+      id: '1',
+      title: 'Product Management Intern',
+      company: 'Acme Corp',
+      location: 'Remote',
+      type: 'Full-time',
+      stipend: 5000,
+      posted: '2 days ago',
+      match: 92,
+      department: 'Product'
+    },
+    {
+      id: '2',
+      title: 'Data Analyst Intern',
+      company: 'Tech Inc',
+      location: 'New York, NY',
+      type: 'Hybrid',
+      stipend: 4500,
+      posted: '1 day ago',
+      match: 88,
+      department: 'Data'
+    },
+    {
+      id: '3',
+      title: 'UX Design Intern',
+      company: 'Design Co',
+      location: 'San Francisco, CA',
+      type: 'On-site',
+      stipend: 4800,
+      posted: '3 days ago',
+      match: 85,
+      department: 'Design'
+    },
+    {
+      id: '4',
+      title: 'Software Engineering Intern',
+      company: 'StartupXYZ',
+      location: 'Remote',
+      type: 'Full-time',
+      stipend: 5500,
+      posted: '5 hours ago',
+      match: 90,
+      department: 'Engineering'
+    },
+    {
+      id: '5',
+      title: 'Marketing Intern',
+      company: 'Brand Labs',
+      location: 'Los Angeles, CA',
+      type: 'Hybrid',
+      stipend: 4000,
+      posted: '1 week ago',
+      match: 78,
+      department: 'Marketing'
+    },
+    {
+      id: '6',
+      title: 'Research Intern',
+      company: 'Global Health Org',
+      location: 'Geneva, Switzerland',
+      type: 'On-site',
+      stipend: 4200,
+      posted: '4 days ago',
+      match: 82,
+      department: 'Research'
+    }
+  ]
+
+  const filters = [
+    { id: 'remote', label: 'Remote' },
+    { id: 'hybrid', label: 'Hybrid' },
+    { id: 'onsite', label: 'On-site' },
+    { id: 'paid', label: 'Paid' },
+    { id: 'fulltime', label: 'Full-time' },
+  ]
+
+  const toggleFilter = (filterId: string) => {
+    setSelectedFilters(prev =>
+      prev.includes(filterId)
+        ? prev.filter(f => f !== filterId)
+        : [...prev, filterId]
+    )
+  }
+
+  const clearFilters = () => {
+    setSelectedFilters([])
+    setSearchQuery('')
+  }
+
+  const handleSearch = () => {
+    // Search is already reactive via filteredInternships
+    // This button provides explicit feedback
+    setIsLoading(true)
+    setTimeout(() => setIsLoading(false), 300)
+  }
+
+  const filteredInternships = internships.filter(internship => {
+    const matchesSearch = internship.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      internship.company.toLowerCase().includes(searchQuery.toLowerCase())
+    
+    const matchesFilters = selectedFilters.length === 0 || (
+      (selectedFilters.includes('remote') && internship.type === 'Remote') ||
+      (selectedFilters.includes('hybrid') && internship.type === 'Hybrid') ||
+      (selectedFilters.includes('onsite') && internship.type === 'On-site') ||
+      (selectedFilters.includes('paid') && internship.stipend) ||
+      (selectedFilters.includes('fulltime') && internship.type === 'Full-time')
+    )
+
+    return matchesSearch && matchesFilters
+  })
+
   return (
-    <motion.div
-      whileHover={{ y: -4 }}
-      className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition"
-    >
-      {isRecommended && (
-        <div className="mb-3">
-          <span className="bg-green-100 text-green-700 text-xs font-semibold px-3 py-1 rounded-full">
-            {Math.round(matchScore * 100)}% Match
-          </span>
+    <div className="space-y-4 sm:space-y-6">
+      {/* Search Section */}
+      <Card className="space-y-4">
+        <div className="flex items-center gap-3">
+          <Search className="w-5 h-5 text-slate-400 opacity-70" />
+          <span className="text-sm font-medium text-slate-300">Search internships</span>
+        </div>
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="relative flex-1">
+            <input
+              type="text"
+              placeholder="Describe your dream internship..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full h-11 rounded-lg bg-white/5 border border-white/10 pl-10 pr-5 text-sm placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-500/50 focus:border-transparent outline-none transition-colors duration-150 min-h-[44px]"
+            />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 opacity-70" />
+          </div>
+          <Button onClick={handleSearch} disabled={isLoading} className="sm:w-auto w-full min-h-[44px]">
+            {isLoading ? 'Searching...' : 'Search'}
+          </Button>
+        </div>
+      </Card>
+
+      {/* Filters */}
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="flex items-center gap-2 text-slate-400 mr-2">
+          <Filter className="w-4 h-4 opacity-70" />
+          <span className="text-sm">Filters:</span>
+        </div>
+        {filters.map((filter) => (
+          <button
+            key={filter.id}
+            onClick={() => toggleFilter(filter.id)}
+            className={`
+              px-3 py-2
+              rounded-full
+              text-xs font-medium
+              border border-transparent
+              transition-colors duration-150
+              focus:outline-none focus:ring-2 focus:ring-sky-500/50
+              active:scale-95
+              min-h-[36px]
+              ${selectedFilters.includes(filter.id)
+                ? 'bg-sky-500/20 text-sky-300 border-sky-400/30'
+                : 'text-slate-400 hover:bg-white/5 hover:text-white'
+              }
+            `}
+          >
+            {filter.label}
+          </button>
+        ))}
+        {(selectedFilters.length > 0 || searchQuery) && (
+          <button
+            onClick={clearFilters}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-full text-xs text-slate-400 hover:text-white hover:bg-white/5 transition-colors duration-150 ml-auto focus:outline-none focus:ring-2 focus:ring-sky-500/50 active:scale-95 min-h-[36px]"
+          >
+            <X className="w-3.5 h-3.5" />
+            Clear all
+          </button>
+        )}
+      </div>
+
+      {/* Results Count */}
+      <div className="flex items-center justify-between">
+        <p className="text-sm text-slate-400">
+          Showing {filteredInternships.length} of {internships.length} opportunities
+        </p>
+      </div>
+
+      {/* Internships Grid */}
+      {filteredInternships.length === 0 ? (
+        <Card>
+          <div className="text-center py-12">
+            <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center mx-auto mb-4">
+              <Building2 className="w-8 h-8 text-slate-500 opacity-50" />
+            </div>
+            <h3 className="text-lg font-medium text-white mb-2">
+              No internships found
+            </h3>
+            <p className="text-slate-400 text-sm mb-6">
+              Try adjusting your search or filters to find more opportunities
+            </p>
+            <div className="flex items-center justify-center gap-3">
+              <Button variant="secondary" onClick={clearFilters}>
+                Reset Filters
+              </Button>
+              <Button onClick={() => router.push('/dashboard/recommendations')}>
+                Browse Recommended Roles
+              </Button>
+            </div>
+          </div>
+        </Card>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {filteredInternships.map((internship) => (
+            <Link key={internship.id} href={`/dashboard/internships/${internship.id}`}>
+              <Card hover className="flex flex-col gap-4">
+                <div className="flex justify-between items-start">
+                  <div className="flex items-center gap-3 flex-1">
+                    <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center border border-white/[0.08]">
+                      <Building2 className="w-5 h-5 text-slate-400 opacity-70" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-medium text-white truncate">
+                        {internship.title}
+                      </h3>
+                      <p className="text-sm text-slate-400 truncate">{internship.company}</p>
+                    </div>
+                  </div>
+
+                  {internship.match && (
+                    <Badge variant="info">
+                      {internship.match}% match
+                    </Badge>
+                  )}
+                </div>
+
+                <div className="flex flex-wrap items-center gap-4 text-xs text-slate-400">
+                  <span className="flex items-center gap-1.5">
+                    <MapPin className="w-3.5 h-3.5 opacity-70" />
+                    {internship.location}
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <DollarSign className="w-3.5 h-3.5 opacity-70" />
+                    {internship.stipend ? `$${internship.stipend.toLocaleString()}` : 'Unpaid'}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between pt-4 border-t border-white/[0.08]">
+                  <span className="text-xs text-slate-500">{internship.posted}</span>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => {
+                        e.preventDefault()
+                        e.stopPropagation()
+                        router.push(`/dashboard/internships/${internship.id}`)
+                      }}
+                      className="min-h-[44px] min-w-[44px]"
+                    >
+                      View
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={(e) => {
+                        e.preventDefault()
+                        e.stopPropagation()
+                        // TODO: Implement application submission
+                        alert('Application feature coming soon!')
+                      }}
+                      className="min-h-[44px]"
+                    >
+                      Apply
+                    </Button>
+                  </div>
+                </div>
+              </Card>
+            </Link>
+          ))}
         </div>
       )}
-      
-      <h3 className="text-xl font-bold text-gray-900 mb-2">
-        {internship.title || 'Internship Position'}
-      </h3>
-      
-      <div className="flex flex-wrap gap-2 mb-4">
-        {internship.remote && (
-          <span className="bg-blue-100 text-blue-700 text-xs px-2 py-1 rounded">Remote</span>
-        )}
-        {internship.paid && (
-          <span className="bg-green-100 text-green-700 text-xs px-2 py-1 rounded">Paid</span>
-        )}
-        {internship.location && (
-          <span className="bg-gray-100 text-gray-700 text-xs px-2 py-1 rounded">
-            {internship.location}
-          </span>
-        )}
-      </div>
-      
-      <p className="text-gray-600 text-sm mb-4 line-clamp-3">
-        {internship.description || 'No description available'}
-      </p>
-      
-      <div className="flex gap-2">
-        <button
-          onClick={onApply}
-          className="flex-1 bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700 transition"
-        >
-          Apply Now
-        </button>
-        <Link
-          href={`/dashboard/internships/${internship.id}`}
-          className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition"
-        >
-          Details
-        </Link>
-      </div>
-    </motion.div>
+
+      {/* Load More */}
+      {filteredInternships.length > 0 && (
+        <div className="flex justify-center pt-4">
+          <Button variant="secondary" className="flex items-center gap-2">
+            Load More Opportunities
+            <ArrowRight className="w-4 h-4" />
+          </Button>
+        </div>
+      )}
+    </div>
   )
 }

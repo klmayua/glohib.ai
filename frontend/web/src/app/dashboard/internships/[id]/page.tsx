@@ -1,213 +1,168 @@
 'use client'
 
-import { useState } from 'react'
-import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
-import { useQuery, useMutation } from '@tanstack/react-query'
-import { internshipAPI } from '@/lib/api'
-import { useAuthStore } from '@/lib/auth-store'
-import { motion } from 'framer-motion'
+import { ArrowLeft, Building2, MapPin, DollarSign, Clock, CheckCircle } from 'lucide-react'
+import { Card, Button, Badge } from '@/components/ui'
+import Link from 'next/link'
 
 export default function InternshipDetailPage() {
   const params = useParams()
   const router = useRouter()
-  const user = useAuthStore((state) => state.user)
-  const [isApplying, setIsApplying] = useState(false)
-
-  const { data, isLoading, error } = useQuery({
-    queryKey: ['internship', params.id],
-    queryFn: () => internshipAPI.get(params.id as string),
-  })
-
-  const applyMutation = useMutation({
-    mutationFn: (internshipId: string) =>
-      internshipAPI.apply(internshipId, { student_id: user?.id }),
-    onSuccess: () => {
-      alert('Application submitted successfully!')
-      setIsApplying(false)
-    },
-    onError: (error: any) => {
-      alert('Failed to apply: ' + (error.response?.data?.error || 'Unknown error'))
-      setIsApplying(false)
-    },
-  })
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
-      </div>
-    )
+  
+  // Mock data - in real app, fetch from API
+  const internship = {
+    id: params.id,
+    title: 'Product Management Intern',
+    company: 'Acme Corp',
+    location: 'Remote',
+    type: 'Full-time',
+    stipend: 5000,
+    posted: '2 days ago',
+    match: 92,
+    department: 'Product',
+    description: 'We're looking for a Product Management Intern to join our team and help shape the future of our products. You'll work closely with senior PMs to define product strategy, conduct user research, and drive product development.',
+    requirements: [
+      'Currently pursuing a degree in Business, Computer Science, or related field',
+      'Strong analytical and problem-solving skills',
+      'Excellent communication and presentation skills',
+      'Passion for technology and user experience',
+      'Ability to work in a fast-paced environment'
+    ],
+    responsibilities: [
+      'Conduct market research and competitive analysis',
+      'Gather and document product requirements',
+      'Collaborate with engineering and design teams',
+      'Analyze user feedback and product metrics',
+      'Present findings and recommendations to stakeholders'
+    ],
+    benefits: [
+      'Competitive stipend',
+      'Flexible working hours',
+      'Mentorship from senior PMs',
+      'Potential for full-time conversion',
+      'Access to learning resources'
+    ]
   }
-
-  if (error || !data?.data) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">Internship not found</h1>
-          <Link href="/dashboard/internships" className="text-indigo-600 hover:underline">
-            Back to internships
-          </Link>
-        </div>
-      </div>
-    )
-  }
-
-  const internship = data.data
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white shadow-sm">
-        <div className="container mx-auto px-6 py-4">
-          <div className="flex justify-between items-center">
-            <Link href="/dashboard/internships" className="text-indigo-600 hover:underline">
-              ← Back to Internships
-            </Link>
-            <Link href="/dashboard" className="text-gray-600 hover:text-gray-900">
-              Dashboard
-            </Link>
+    <div className="space-y-6">
+      {/* Back Button */}
+      <Link href="/dashboard/internships">
+        <Button variant="ghost" size="sm" className="flex items-center gap-2">
+          <ArrowLeft className="w-4 h-4" />
+          Back to Internships
+        </Button>
+      </Link>
+
+      {/* Header */}
+      <Card>
+        <div className="flex items-start justify-between mb-6">
+          <div className="flex items-center gap-4">
+            <div className="w-16 h-16 rounded-xl bg-white/5 flex items-center justify-center border border-white/[0.08]">
+              <Building2 className="w-8 h-8 text-slate-400 opacity-70" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-semibold text-white mb-1">
+                {internship.title}
+              </h1>
+              <p className="text-slate-400">{internship.company}</p>
+            </div>
           </div>
+          <Badge variant="info">
+            {internship.match}% match
+          </Badge>
         </div>
-      </nav>
 
-      <main className="container mx-auto px-6 py-12">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="max-w-4xl mx-auto"
-        >
-          <div className="bg-white rounded-xl shadow-lg p-8 mb-6">
-            <div className="flex items-start justify-between mb-6">
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                  {internship.title}
-                </h1>
-                <div className="flex flex-wrap gap-2">
-                  {internship.remote && (
-                    <span className="bg-blue-100 text-blue-700 text-xs px-3 py-1 rounded-full">
-                      Remote
-                    </span>
-                  )}
-                  {internship.paid && (
-                    <span className="bg-green-100 text-green-700 text-xs px-3 py-1 rounded-full">
-                      Paid
-                    </span>
-                  )}
-                  {internship.location && (
-                    <span className="bg-gray-100 text-gray-700 text-xs px-3 py-1 rounded-full">
-                      {internship.location}
-                    </span>
-                  )}
-                  {internship.duration && (
-                    <span className="bg-purple-100 text-purple-700 text-xs px-3 py-1 rounded-full">
-                      {internship.duration}
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
+        <div className="flex flex-wrap gap-6 text-sm text-slate-400 mb-6">
+          <span className="flex items-center gap-2">
+            <MapPin className="w-4 h-4 opacity-70" />
+            {internship.location}
+          </span>
+          <span className="flex items-center gap-2">
+            <Clock className="w-4 h-4 opacity-70" />
+            {internship.type}
+          </span>
+          <span className="flex items-center gap-2">
+            <DollarSign className="w-4 h-4 opacity-70" />
+            {internship.stipend ? `$${internship.stipend.toLocaleString()}/month` : 'Unpaid'}
+          </span>
+          <span className="flex items-center gap-2">
+            <CheckCircle className="w-4 h-4 opacity-70" />
+            Posted {internship.posted}
+          </span>
+        </div>
 
-            <div className="prose max-w-none mb-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-3">Description</h2>
-              <p className="text-gray-700 whitespace-pre-wrap">
-                {internship.description}
-              </p>
-            </div>
+        <div className="flex gap-3">
+          <Button className="flex-1">
+            Apply Now
+          </Button>
+          <Button variant="secondary">
+            Save
+          </Button>
+        </div>
+      </Card>
 
-            {internship.skills && internship.skills.length > 0 && (
-              <div className="mb-6">
-                <h2 className="text-xl font-bold text-gray-900 mb-3">Required Skills</h2>
-                <div className="flex flex-wrap gap-2">
-                  {internship.skills.map((skill: string, index: number) => (
-                    <span
-                      key={index}
-                      className="bg-indigo-100 text-indigo-700 text-sm px-3 py-1 rounded-full"
-                    >
-                      {skill}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
+      {/* Description */}
+      <Card>
+        <h2 className="text-lg font-medium text-white mb-4">Description</h2>
+        <p className="text-slate-300 leading-relaxed">
+          {internship.description}
+        </p>
+      </Card>
 
-            {internship.tags && internship.tags.length > 0 && (
-              <div className="mb-6">
-                <h2 className="text-xl font-bold text-gray-900 mb-3">Tags</h2>
-                <div className="flex flex-wrap gap-2">
-                  {internship.tags.map((tag: string, index: number) => (
-                    <span
-                      key={index}
-                      className="bg-gray-100 text-gray-600 text-sm px-3 py-1 rounded-full"
-                    >
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
+      {/* Requirements */}
+      <Card>
+        <h2 className="text-lg font-medium text-white mb-4">Requirements</h2>
+        <ul className="space-y-2">
+          {internship.requirements.map((req, index) => (
+            <li key={index} className="flex items-start gap-3 text-slate-300">
+              <span className="text-sky-400 mt-1">•</span>
+              <span>{req}</span>
+            </li>
+          ))}
+        </ul>
+      </Card>
 
-            <div className="flex gap-4 pt-6 border-t">
-              {isApplying ? (
-                <button
-                  disabled
-                  className="flex-1 bg-indigo-600 text-white py-3 rounded-lg font-semibold opacity-50 cursor-not-allowed"
-                >
-                  Applying...
-                </button>
-              ) : (
-                <button
-                  onClick={() => setIsApplying(true)}
-                  disabled={!user}
-                  className="flex-1 bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {user ? 'Apply Now' : 'Login to Apply'}
-                </button>
-              )}
-              <Link
-                href={`/dashboard/internships`}
-                className="px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition"
-              >
-                Cancel
-              </Link>
-            </div>
-          </div>
+      {/* Responsibilities */}
+      <Card>
+        <h2 className="text-lg font-medium text-white mb-4">Responsibilities</h2>
+        <ul className="space-y-2">
+          {internship.responsibilities.map((resp, index) => (
+            <li key={index} className="flex items-start gap-3 text-slate-300">
+              <span className="text-sky-400 mt-1">•</span>
+              <span>{resp}</span>
+            </li>
+          ))}
+        </ul>
+      </Card>
 
-          {/* Application Status */}
-          {user && (
-            <div className="bg-white rounded-xl shadow-lg p-8">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">About This Internship</h2>
-              <div className="space-y-4">
-                <div className="flex justify-between py-3 border-b">
-                  <span className="text-gray-600">Posted</span>
-                  <span className="text-gray-900">
-                    {internship.created_at
-                      ? new Date(internship.created_at).toLocaleDateString()
-                      : 'Recently'}
-                  </span>
-                </div>
-                <div className="flex justify-between py-3 border-b">
-                  <span className="text-gray-600">Work Type</span>
-                  <span className="text-gray-900">
-                    {internship.remote ? 'Remote' : 'On-site'}
-                  </span>
-                </div>
-                <div className="flex justify-between py-3 border-b">
-                  <span className="text-gray-600">Compensation</span>
-                  <span className="text-gray-900">
-                    {internship.paid ? 'Paid' : 'Unpaid'}
-                  </span>
-                </div>
-                <div className="flex justify-between py-3">
-                  <span className="text-gray-600">Duration</span>
-                  <span className="text-gray-900">
-                    {internship.duration || 'Not specified'}
-                  </span>
-                </div>
-              </div>
-            </div>
-          )}
-        </motion.div>
-      </main>
+      {/* Benefits */}
+      <Card>
+        <h2 className="text-lg font-medium text-white mb-4">Benefits</h2>
+        <ul className="space-y-2">
+          {internship.benefits.map((benefit, index) => (
+            <li key={index} className="flex items-start gap-3 text-slate-300">
+              <span className="text-green-400 mt-1">✓</span>
+              <span>{benefit}</span>
+            </li>
+          ))}
+        </ul>
+      </Card>
+
+      {/* Apply CTA */}
+      <Card>
+        <div className="text-center space-y-4">
+          <h3 className="text-lg font-medium text-white">
+            Ready to apply?
+          </h3>
+          <p className="text-slate-400 text-sm">
+            Submit your application and take the first step towards your dream internship.
+          </p>
+          <Button className="w-full max-w-xs">
+            Submit Application
+          </Button>
+        </div>
+      </Card>
     </div>
   )
 }

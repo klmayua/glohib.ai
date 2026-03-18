@@ -10,7 +10,7 @@ database:
   host: "postgres"
   port: 5432
   user: "glohib"
-  password: "changeme"
+  password: "GlohibAI_DB_Secure_2026!"
   database: "glohib_db"
   ssl_mode: "disable"
   max_conns: 25

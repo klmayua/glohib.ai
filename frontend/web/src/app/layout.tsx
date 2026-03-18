@@ -10,6 +10,10 @@ export const metadata: Metadata = {
   description: 'AI-powered internship matching platform',
 }
 
+// Force dynamic rendering for all pages
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
+
 export default function RootLayout({
   children,
 }: {

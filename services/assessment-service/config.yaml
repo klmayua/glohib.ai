@@ -2,7 +2,7 @@ db:
   host: postgres
   port: 5432
   user: glohib
-  password: glohib
+  password: "GlohibAI_DB_Secure_2026!"
   dbname: glohib_db
   sslmode: disable
 redis:

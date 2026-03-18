@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"net/http"
+	"strings"
 	"time"
 	"github.com/gin-gonic/gin"
 	"github.com/glohib/identity-service/internal/config"
@@ -14,6 +15,10 @@ import (
 	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
 )
+
+func generateID() string {
+	return uuid.New().String()
+}
 
 type AuthHandler struct {
 	db    *db.DB
@@ -41,26 +46,26 @@ func (h *AuthHandler) Register(c *gin.Context) {
 	}
 
 	user := models.User{
-		ID:        uuid.New(),
+		ID:        generateID(),
 		Email:     req.Email,
 		Password:  string(hashed),
-		Roles:     []string{req.Role},
+		Roles:     []string{strings.ToUpper(req.Role)},
 		Provider:  "local",
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}
 
 	_, err = h.db.Exec(c, `
-		INSERT INTO users (id, email, password_hash, roles, provider, created_at, updated_at)
+		INSERT INTO users (id, email, password, role, status, "createdAt", "updatedAt")
 		VALUES ($1, $2, $3, $4, $5, $6, $7)
-	`, user.ID, user.Email, user.Password, user.Roles, user.Provider, user.CreatedAt, user.UpdatedAt)
+	`, user.ID, user.Email, user.Password, user.Roles[0], "ACTIVE", user.CreatedAt, user.UpdatedAt)
 	if err != nil {
 		logger.Error("insert user failed", zap.Error(err))
 		c.JSON(http.StatusConflict, gin.H{"error": "user exists"})
 		return
 	}
 
-	tokens, err := h.jwt.GenerateTokens(user.ID.String(), user.Roles)
+	tokens, err := h.jwt.GenerateTokens(user.ID, user.Roles)
 	if err != nil {
 		logger.Error("generate tokens failed", zap.Error(err))
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal error"})
@@ -78,27 +83,33 @@ func (h *AuthHandler) Login(c *gin.Context) {
 	}
 
 	var user models.User
+	var role string
 	err := h.db.QueryRow(c, `
-		SELECT id, email, password_hash, roles FROM users WHERE email=$1
-	`, req.Email).Scan(&user.ID, &user.Email, &user.Password, &user.Roles)
+		SELECT id, email, password, role FROM users WHERE email=$1
+	`, req.Email).Scan(&user.ID, &user.Email, &user.Password, &role)
 	if err != nil {
+		logger.Error("login query error", zap.Error(err), zap.String("email", req.Email))
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid credentials"})
 		return
 	}
+	user.Roles = []string{role}
+	logger.Info("user found", zap.String("email", req.Email), zap.String("role", role))
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)); err != nil {
+		logger.Error("password comparison failed", zap.String("email", req.Email))
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid credentials"})
 		return
 	}
+	logger.Info("password verified", zap.String("email", req.Email))
 
-	tokens, err := h.jwt.GenerateTokens(user.ID.String(), user.Roles)
+	tokens, err := h.jwt.GenerateTokens(user.ID, user.Roles)
 	if err != nil {
 		logger.Error("generate tokens failed", zap.Error(err))
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal error"})
 		return
 	}
 
-	h.redis.Set(c, "refresh:"+tokens.RefreshToken, user.ID.String(), time.Duration(h.cfg.JWT.RefreshExpiry)*24*time.Hour)
+	h.redis.Set(c, "refresh:"+tokens.RefreshToken, user.ID, time.Duration(h.cfg.JWT.RefreshExpiry)*24*time.Hour)
 
 	c.JSON(http.StatusOK, gin.H{"tokens": tokens})
 }
@@ -129,11 +140,13 @@ func (h *AuthHandler) Refresh(c *gin.Context) {
 	}
 
 	var roles []string
-	err = h.db.QueryRow(c, `SELECT roles FROM users WHERE id=$1`, userID).Scan(&roles)
+	var role string
+	err = h.db.QueryRow(c, `SELECT role FROM users WHERE id=$1`, userID).Scan(&role)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "user not found"})
 		return
 	}
+	roles = []string{role}
 
 	tokens, err := h.jwt.GenerateTokens(userID, roles)
 	if err != nil {
@@ -151,12 +164,16 @@ func (h *AuthHandler) Refresh(c *gin.Context) {
 func (h *AuthHandler) Me(c *gin.Context) {
 	userID := c.GetString("user_id")
 	var user models.User
+	var role string
+	var createdAt interface{}
 	err := h.db.QueryRow(c, `
-		SELECT id, email, roles, created_at FROM users WHERE id=$1
-	`, userID).Scan(&user.ID, &user.Email, &user.Roles, &user.CreatedAt)
+		SELECT id, email, role, "createdAt" FROM users WHERE id=$1
+	`, userID).Scan(&user.ID, &user.Email, &role, &createdAt)
 	if err != nil {
+		logger.Error("Me query error", zap.Error(err), zap.String("user_id", userID))
 		c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
 		return
 	}
+	user.Roles = []string{role}
 	c.JSON(http.StatusOK, user)
 }

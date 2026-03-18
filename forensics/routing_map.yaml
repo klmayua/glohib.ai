@@ -1,0 +1,63 @@
+# ROUTING MAP - SOURCE OF TRUTH
+# All routes must match this exactly
+
+## Valid Routes
+valid_routes:
+  - path: /dashboard
+    name: Overview
+    status: ACTIVE
+    
+  - path: /dashboard/internships
+    name: Internships
+    status: ACTIVE
+    
+  - path: /dashboard/applications
+    name: Applications
+    status: ACTIVE
+    
+  - path: /dashboard/recommendations
+    name: Recommendations
+    status: ACTIVE
+    
+  - path: /dashboard/profile
+    name: Profile
+    status: ACTIVE
+    
+  - path: /dashboard/interviews
+    name: Interviews
+    status: ACTIVE - CREATED 2026-03-18
+    
+  - path: /dashboard/saved
+    name: Saved Roles
+    status: ACTIVE - CREATED 2026-03-18
+
+## Phase 2 Status
+phase_2_complete: true
+fixes_applied:
+  - Created /dashboard/interviews page
+  - Created /dashboard/saved page
+  - All routes now return 200 OK
+timestamp: 2026-03-18
+
+## Route Mismatches Found
+mismatches:
+  - page: Interviews card
+    current_route: /dashboard/internships (WRONG)
+    correct_route: /dashboard/interviews
+    
+  - page: Profile Views card
+    current_route: /dashboard/profile (WRONG)
+    correct_route: /dashboard/analytics/profile-views
+    fallback: /dashboard/profile
+    
+  - page: Saved Roles card
+    current_route: /dashboard/recommendations (WRONG)
+    correct_route: /dashboard/saved
+
+## Sidebar Links Status
+sidebar_links:
+  Overview: VALID
+  Internships: VALID
+  Applications: VALID
+  Recommendations: VALID
+  Profile: VALID

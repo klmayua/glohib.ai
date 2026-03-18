@@ -2,14 +2,13 @@ package models
 
 import (
 	"time"
-	"github.com/google/uuid"
 )
 
 type User struct {
-	ID         uuid.UUID `json:"id" db:"id"`
+	ID         string    `json:"id" db:"id"`
 	Email      string    `json:"email" db:"email"`
-	Password   string    `json:"-" db:"password_hash"`
-	Roles      []string  `json:"roles" db:"roles"`
+	Password   string    `json:"-" db:"password"`
+	Roles      []string  `json:"roles" db:"-"`
 	Provider   string    `json:"provider" db:"provider"`
 	ProviderID string    `json:"provider_id" db:"provider_id"`
 	CreatedAt  time.Time `json:"created_at" db:"created_at"`

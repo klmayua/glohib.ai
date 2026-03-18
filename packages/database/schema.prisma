@@ -1,0 +1,676 @@
+// PWC 2030 Standard - Identity Schema
+// Generated: 2026-03-17
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================================
+// USER IDENTITY (NextAuth.js compatible)
+// ============================================================================
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?   // For credentials auth
+  role          UserRole  @default(STUDENT)
+  status        UserStatus @default(PENDING_VERIFICATION)
+  
+  // Relations
+  accounts      Account[]
+  sessions      Session[]
+  verificationTokens VerificationToken[]
+  
+  // Domain-specific relations
+  studentProfile StudentProfile?
+  employerProfile EmployerProfile?
+  mentorProfile MentorProfile?
+  
+  // Metadata
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  lastLoginAt   DateTime?
+  deletedAt     DateTime?
+
+  @@index([email])
+  @@index([role, status])
+  @@map("users")
+}
+
+enum UserRole {
+  STUDENT
+  EMPLOYER
+  MENTOR
+  ADMIN
+}
+
+enum UserStatus {
+  PENDING_VERIFICATION
+  ACTIVE
+  SUSPENDED
+  DELETED
+}
+
+// ============================================================================
+// OAUTH ACCOUNTS
+// ============================================================================
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+  @@map("accounts")
+}
+
+// ============================================================================
+// SESSIONS
+// ============================================================================
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  userAgent    String?
+  ipAddress    String?
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expires])
+  @@map("sessions")
+}
+
+// ============================================================================
+// VERIFICATION TOKENS
+// ============================================================================
+
+model VerificationToken {
+  id         String   @id @default(cuid())
+  identifier String
+  token      String   @unique
+  expires    DateTime
+  createdAt  DateTime @default(now())
+
+  @@unique([identifier, token])
+  @@index([expires])
+  @@map("verification_tokens")
+}
+
+// ============================================================================
+// PASSWORD RESET TOKENS
+// ============================================================================
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  email     String
+  token     String   @unique
+  expires   DateTime
+  createdAt DateTime @default(now())
+  used      Boolean  @default(false)
+
+  @@index([email])
+  @@index([expires])
+  @@map("password_reset_tokens")
+}
+
+// ============================================================================
+// STUDENT PROFILE
+// ============================================================================
+
+model StudentProfile {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Basic Info
+  firstName       String?
+  lastName        String?
+  phone           String?
+  dateOfBirth     DateTime?
+  nationality     String?
+  
+  // Education
+  university      String?
+  major           String?
+  graduationYear  Int?
+  degreeLevel     String?
+  gpa             Float?
+  
+  // Profile
+  bio             String?  @db.Text
+  headline        String?
+  location        Json?    // { city, country, coordinates }
+  preferences     Json?    // { remote, relocation, industries }
+  
+  // Relations
+  skills          Skill[]
+  education       Education[]
+  experience      Experience[]
+  applications    Application[]
+  savedInternships SavedInternship[]
+  
+  // Metadata
+  profileComplete Boolean  @default(false)
+  completenessScore Int    @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([userId])
+  @@index([university, major])
+  @@index([graduationYear])
+  @@map("student_profiles")
+}
+
+// ============================================================================
+// EMPLOYER PROFILE
+// ============================================================================
+
+model EmployerProfile {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Company Info
+  companyName     String
+  companyWebsite  String
+  companySize     CompanySize
+  industry        String?
+  description     String?  @db.Text
+  logo            String?
+  headquarters    String?
+  
+  // Verification
+  verified        Boolean  @default(false)
+  verifiedAt      DateTime?
+  verificationDoc String?
+  
+  // Relations
+  internships     Internship[]
+  teamMembers     TeamMember[]
+  
+  // Metadata
+  profileComplete Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([userId])
+  @@index([companyName])
+  @@index([verified])
+  @@map("employer_profiles")
+}
+
+enum CompanySize {
+  STARTUP
+  SMALL
+  MEDIUM
+  LARGE
+  ENTERPRISE
+}
+
+// ============================================================================
+// MENTOR PROFILE
+// ============================================================================
+
+model MentorProfile {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Professional Info
+  currentRole     String?
+  currentCompany  String?
+  yearsExperience Int?
+  
+  // Expertise
+  expertiseAreas  String[]
+  industries      String[]
+  skills          Skill[]
+  
+  // Mentoring
+  availability    Json?    // { hoursPerWeek, preferredFormat, timezone }
+  commitment      String?  // short-term, long-term, project-based
+  rate            Float?   // hourly rate (optional)
+  
+  // Relations
+  mentees         Mentorship[] @relation("Mentor")
+  sessions        MentorshipSession[]
+  reviews         MentorReview[] @relation("MentorReviews")
+  
+  // Stats
+  totalMentees    Int      @default(0)
+  totalSessions   Int      @default(0)
+  rating          Float    @default(0)
+  reviewCount     Int      @default(0)
+  
+  // Metadata
+  profileComplete Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([userId])
+  @@index([currentCompany])
+  @@index([rating])
+  @@map("mentor_profiles")
+}
+
+// ============================================================================
+// SKILLS
+// ============================================================================
+
+model Skill {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  category  String?
+  
+  // Relations
+  students  StudentProfile[]
+  mentors   MentorProfile[]
+  
+  createdAt DateTime @default(now())
+  
+  @@index([category])
+  @@map("skills")
+}
+
+// ============================================================================
+// EDUCATION
+// ============================================================================
+
+model Education {
+  id              String   @id @default(cuid())
+  studentId       String
+  student         StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  
+  institution     String
+  degree          String?
+  fieldOfStudy    String?
+  startYear       Int?
+  endYear         Int?
+  grade           String?
+  description     String?  @db.Text
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([studentId])
+  @@map("education")
+}
+
+// ============================================================================
+// EXPERIENCE
+// ============================================================================
+
+model Experience {
+  id              String   @id @default(cuid())
+  studentId       String
+  student         StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  
+  company         String
+  position        String
+  location        String?
+  startDate       DateTime
+  endDate         DateTime?
+  current         Boolean  @default(false)
+  description     String?  @db.Text
+  skills          String[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([studentId])
+  @@map("experience")
+}
+
+// ============================================================================
+// INTERNSHIPS
+// ============================================================================
+
+model Internship {
+  id              String   @id @default(cuid())
+  employerId      String
+  employer        EmployerProfile @relation(fields: [employerId], references: [id], onDelete: Cascade)
+  
+  title           String
+  description     String   @db.Text
+  requirements    String[]
+  skills          String[]
+  
+  // Location
+  location        Json     // { city, country, remote, hybrid }
+  
+  // Details
+  type            InternshipType
+  duration        String   // e.g., "3 months"
+  startDate       DateTime?
+  applicationDeadline DateTime?
+  
+  // Compensation
+  compensation    Json?    // { type, amount, currency }
+  
+  // Status
+  status          InternshipStatus @default(DRAFT)
+  publishedAt     DateTime?
+  views           Int      @default(0)
+  applicationsCount Int    @default(0)
+  
+  // Relations
+  applications    Application[]
+  savedBy         SavedInternship[]
+  
+  // Metadata
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  deletedAt       DateTime?
+
+  @@index([employerId])
+  @@index([status, publishedAt])
+  @@index([skills])
+  @@index([location])
+  @@map("internships")
+}
+
+enum InternshipType {
+  SUMMER
+  WINTER
+  SPRING
+  FALL
+  YEAR_ROUND
+  PART_TIME
+  FULL_TIME
+}
+
+enum InternshipStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  CLOSED
+  EXPIRED
+}
+
+// ============================================================================
+// APPLICATIONS
+// ============================================================================
+
+model Application {
+  id              String   @id @default(cuid())
+  internshipId    String
+  internship      Internship @relation(fields: [internshipId], references: [id], onDelete: Cascade)
+  studentId       String
+  student         StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  
+  // Application Data
+  coverLetter     String?  @db.Text
+  resume          String?
+  portfolio       String?
+  
+  // Status
+  status          ApplicationStatus @default(SUBMITTED)
+  submittedAt     DateTime @default(now())
+  reviewedAt      DateTime?
+  respondedAt     DateTime?
+  
+  // Employer Notes
+  employerNotes   String?  @db.Text
+  rating          Int?     // 1-5
+  
+  // Relations
+  messages        Message[]
+  interviews      Interview[]
+  
+  // Metadata
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([internshipId, studentId])
+  @@index([studentId])
+  @@index([internshipId, status])
+  @@index([status])
+  @@map("applications")
+}
+
+enum ApplicationStatus {
+  SUBMITTED
+  UNDER_REVIEW
+  SHORTLISTED
+  INTERVIEWING
+  OFFERED
+  ACCEPTED
+  REJECTED
+  WITHDRAWN
+}
+
+// ============================================================================
+// SAVED INTERNSHIPS
+// ============================================================================
+
+model SavedInternship {
+  id              String   @id @default(cuid())
+  studentId       String
+  student         StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  internshipId    String
+  internship      Internship @relation(fields: [internshipId], references: [id], onDelete: Cascade)
+  
+  createdAt       DateTime @default(now())
+
+  @@unique([studentId, internshipId])
+  @@map("saved_internships")
+}
+
+// ============================================================================
+// MENTORSHIP
+// ============================================================================
+
+model Mentorship {
+  id              String   @id @default(cuid())
+  mentorId        String
+  mentor          MentorProfile @relation(fields: [mentorId], references: [id], onDelete: Cascade, name: "Mentor")
+  menteeId        String
+  // mentee        StudentProfile @relation(fields: [menteeId], references: [id], onDelete: Cascade, name: "Mentee")
+  
+  // Mentorship Details
+  goals           String[] @db.Text
+  startDate       DateTime
+  endDate         DateTime?
+  status          MentorshipStatus @default(ACTIVE)
+  format          String   // virtual, in-person, hybrid
+  
+  // Relations
+  sessions        MentorshipSession[]
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([mentorId])
+  @@index([menteeId])
+  @@index([status])
+  @@map("mentorships")
+}
+
+enum MentorshipStatus {
+  PENDING
+  ACTIVE
+  COMPLETED
+  PAUSED
+  CANCELLED
+}
+
+// ============================================================================
+// MENTORSHIP SESSIONS
+// ============================================================================
+
+model MentorshipSession {
+  id              String   @id @default(cuid())
+  mentorshipId    String
+  mentorship      Mentorship @relation(fields: [mentorshipId], references: [id], onDelete: Cascade)
+  mentorId        String
+  mentor          MentorProfile @relation(fields: [mentorId], references: [id], onDelete: Cascade)
+  
+  // Session Details
+  scheduledAt     DateTime
+  duration        Int      // minutes
+  format          String   // video, phone, in-person
+  meetingLink     String?
+  
+  // Notes
+  agenda          String?
+  notes           String?  @db.Text
+  actionItems     String[]
+  
+  // Status
+  status          SessionStatus @default(SCHEDULED)
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([mentorshipId])
+  @@index([mentorId])
+  @@index([scheduledAt])
+  @@map("mentorship_sessions")
+}
+
+enum SessionStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+// ============================================================================
+// MENTOR REVIEWS
+// ============================================================================
+
+model MentorReview {
+  id              String   @id @default(cuid())
+  mentorId        String
+  mentor          MentorProfile @relation(fields: [mentorId], references: [id], onDelete: Cascade, name: "MentorReviews")
+  menteeId        String
+  
+  // Review
+  rating          Int      // 1-5
+  comment         String?  @db.Text
+  categories      Json?    // { communication, expertise, helpfulness }
+  
+  // Visibility
+  visible         Boolean  @default(true)
+  
+  createdAt       DateTime @default(now())
+
+  @@index([mentorId])
+  @@index([rating])
+  @@map("mentor_reviews")
+}
+
+// ============================================================================
+// MESSAGES
+// ============================================================================
+
+model Message {
+  id              String   @id @default(cuid())
+  applicationId   String?
+  application     Application? @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  
+  senderId        String
+  recipientId     String
+  content         String   @db.Text
+  
+  // Status
+  read            Boolean  @default(false)
+  readAt          DateTime?
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([applicationId])
+  @@index([senderId])
+  @@index([recipientId])
+  @@index([createdAt])
+  @@map("messages")
+}
+
+// ============================================================================
+// INTERVIEWS
+// ============================================================================
+
+model Interview {
+  id              String   @id @default(cuid())
+  applicationId   String
+  application     Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  
+  // Interview Details
+  type            String   // phone, video, in-person
+  scheduledAt     DateTime
+  duration        Int      // minutes
+  location        String?
+  meetingLink     String?
+  
+  // Interviewers
+  interviewers    String[]
+  
+  // Status
+  status          InterviewStatus @default(SCHEDULED)
+  feedback        String?  @db.Text
+  decision        String?
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([applicationId])
+  @@index([scheduledAt])
+  @@map("interviews")
+}
+
+enum InterviewStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+  RESCHEDULED
+}
+
+// ============================================================================
+// TEAM MEMBERS (for employer organizations)
+// ============================================================================
+
+model TeamMember {
+  id              String   @id @default(cuid())
+  employerId      String
+  employer        EmployerProfile @relation(fields: [employerId], references: [id], onDelete: Cascade)
+  
+  userId          String?  // If linked to a User account
+  email           String
+  name            String
+  role            String   // admin, recruiter, viewer
+  
+  permissions     Json?    // { canPost, canReview, canManage }
+  
+  invitedAt       DateTime?
+  joinedAt        DateTime?
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([employerId])
+  @@index([email])
+  @@map("team_members")
+}

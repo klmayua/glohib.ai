@@ -19,31 +19,38 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
-    loginMutation.mutate(formData, {
-      onError: (err: any) => {
-        setError(err.response?.data?.error || 'Login failed')
-      },
-    })
+
+    try {
+      await loginMutation.mutateAsync(formData)
+      // Navigation happens in the hook's onSuccess
+    } catch (err: any) {
+      setError(err.response?.data?.error || 'Login failed. Please try again.')
+    }
+  }
+
+  // Clear error when user starts typing
+  const handleInputChange = () => {
+    if (error) setError('')
   }
 
   return (
     <div className="min-h-screen bg-slate-950 animated-gradient noise-overlay relative overflow-hidden flex items-center justify-center px-4">
-      {/* Background Elements */}
-      <div className="absolute inset-0 grid-pattern opacity-50" />
-      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-cyan-500/10 rounded-full blur-[128px]" />
-      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-blue-600/10 rounded-full blur-[128px]" />
+      {/* Background Elements - OPTIMIZED */}
+      <div className="absolute inset-0 grid-pattern opacity-30" />
+      <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-cyan-500/10 rounded-full blur-[64px]" />
+      <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-blue-600/10 rounded-full blur-[64px]" />
 
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.5 }}
+        transition={{ duration: 0.2 }}
         className="relative z-10 max-w-md w-full"
       >
         {/* Logo */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
+          transition={{ delay: 0.1 }}
           className="text-center mb-8"
         >
           <Link href="/" className="inline-flex items-center gap-2">
@@ -60,7 +67,7 @@ export default function LoginPage() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
+          transition={{ delay: 0.15 }}
           className="glass-card rounded-sm p-8"
         >
           <div className="text-center mb-8">
@@ -110,9 +117,13 @@ export default function LoginPage() {
                   id="email"
                   type="email"
                   required
+                  disabled={loginMutation.isPending}
                   value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/10 rounded-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all"
+                  onChange={(e) => {
+                    setFormData({ ...formData, email: e.target.value })
+                    handleInputChange()
+                  }}
+                  className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/10 rounded-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all disabled:opacity-50"
                   placeholder="you@example.com"
                 />
               </div>
@@ -128,9 +139,13 @@ export default function LoginPage() {
                   id="password"
                   type="password"
                   required
+                  disabled={loginMutation.isPending}
                   value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/10 rounded-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all"
+                  onChange={(e) => {
+                    setFormData({ ...formData, password: e.target.value })
+                    handleInputChange()
+                  }}
+                  className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/10 rounded-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all disabled:opacity-50"
                   placeholder="••••••••"
                 />
               </div>
