@@ -20,7 +20,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       {/* Mobile Sidebar Overlay */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden anim-fade-in"
+          className="fixed inset-0 bg-black/70 z-40 lg:hidden anim-fade-in"
           onClick={() => setSidebarOpen(false)}
         />
       )}

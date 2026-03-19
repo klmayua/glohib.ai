@@ -66,8 +66,8 @@ function ResetPasswordContent() {
   return (
     <div className="min-h-screen bg-slate-950 animated-gradient noise-overlay relative overflow-hidden flex items-center justify-center px-4">
       <div className="absolute inset-0 grid-pattern opacity-30" />
-      <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-cyan-500/10 rounded-full blur-[64px]" />
-      <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-blue-600/10 rounded-full blur-[64px]" />
+      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-cyan-500/5 rounded-full" />
+      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-blue-600/5 rounded-full" />
 
       <div className="relative z-10 max-w-md w-full anim-fade-in-scale">
         {/* Logo */}

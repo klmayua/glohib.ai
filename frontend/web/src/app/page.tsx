@@ -15,8 +15,8 @@ export default function HomePage() {
     <div className="min-h-screen bg-slate-950 animated-gradient noise-overlay relative overflow-hidden">
       {/* Background Elements - OPTIMIZED */}
       <div className="absolute inset-0 grid-pattern opacity-30" />
-      <div className="absolute top-0 left-1/4 w-64 h-64 bg-cyan-500/10 rounded-full blur-[64px]" />
-      <div className="absolute bottom-0 right-1/4 w-64 h-64 bg-blue-600/10 rounded-full blur-[64px]" />
+      <div className="absolute top-0 left-1/4 w-96 h-96 bg-cyan-500/5 rounded-full" />
+      <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-blue-600/5 rounded-full" />
 
       {/* Navigation */}
       <nav className="fixed top-0 left-0 right-0 z-50 glass-nav">

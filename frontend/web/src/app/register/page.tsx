@@ -59,8 +59,8 @@ export default function RegisterPage() {
     <div className="min-h-screen bg-slate-950 animated-gradient noise-overlay relative overflow-hidden flex items-center justify-center px-4 py-12">
       {/* Background Elements */}
       <div className="absolute inset-0 grid-pattern opacity-50" />
-      <div className="absolute top-1/4 right-1/4 w-96 h-96 bg-cyan-500/10 rounded-full blur-[128px]" />
-      <div className="absolute bottom-1/4 left-1/4 w-96 h-96 bg-blue-600/10 rounded-full blur-[128px]" />
+      <div className="absolute top-1/4 right-1/4 w-96 h-96 bg-cyan-500/5 rounded-full" />
+      <div className="absolute bottom-1/4 left-1/4 w-96 h-96 bg-blue-600/5 rounded-full" />
 
       <div className="relative z-10 max-w-md w-full anim-fade-in-scale">
         {/* Logo */}

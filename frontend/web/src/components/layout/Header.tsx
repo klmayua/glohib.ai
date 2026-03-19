@@ -51,7 +51,7 @@ function Header({ onMenuClick }: HeaderProps) {
   ]
 
   return (
-    <header className="h-16 flex items-center justify-between px-4 sm:px-6 lg:px-8 border-b border-white/[0.08] bg-[#020617]/95 backdrop-blur-xl sticky top-0 z-30">
+    <header className="h-16 flex items-center justify-between px-4 sm:px-6 lg:px-8 border-b border-white/[0.08] bg-[#020617] sticky top-0 z-30">
       <div className="flex items-center gap-3 sm:gap-4">
         <Button
           variant="ghost"
