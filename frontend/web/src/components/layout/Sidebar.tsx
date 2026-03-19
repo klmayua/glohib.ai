@@ -9,13 +9,15 @@ import {
   FileText,
   Sparkles,
   User,
+  Heart,
 } from 'lucide-react'
 
 const navigation = [
-  { name: 'Overview', href: '/dashboard', icon: LayoutDashboard },
+  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Internships', href: '/dashboard/internships', icon: Briefcase },
   { name: 'Applications', href: '/dashboard/applications', icon: FileText },
   { name: 'Recommendations', href: '/dashboard/recommendations', icon: Sparkles },
+  { name: 'Saved Roles', href: '/dashboard/saved', icon: Heart },
   { name: 'Profile', href: '/dashboard/profile', icon: User },
 ]
 
