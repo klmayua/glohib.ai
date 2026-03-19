@@ -5,8 +5,6 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Target, TrendingUp, AlertCircle, CheckCircle, ArrowRight, Book, Calendar } from 'lucide-react'
 import { Card, Button, Badge, Progress } from '@/components/ui'
-import { useDashboardIntegration } from '@/core/integration/dashboardIntegration'
-import type { Skill } from '@/features/matching/matchEngine'
 
 interface SkillGap {
   skill: string
@@ -19,13 +17,12 @@ interface SkillGap {
 
 export default function SkillsGapPage() {
   const router = useRouter()
-  const { findMissingSkills, missingSkills, getSkillGap } = useDashboardIntegration()
   const [selectedCareer, setSelectedCareer] = useState('epidemiologist')
   const [skillGaps, setSkillGaps] = useState<SkillGap[]>([])
   const [overallGap, setOverallGap] = useState(0)
 
   // Mock student skills - in real app, fetch from API
-  const studentSkills: Skill[] = [
+  const studentSkills = [
     { name: 'Data Analysis', level: 'intermediate' },
     { name: 'Python', level: 'intermediate' },
     { name: 'Communication', level: 'advanced' },
@@ -33,7 +30,7 @@ export default function SkillsGapPage() {
   ]
 
   // Career skill requirements
-  const careerRequirements: Record<string, Skill[]> = {
+  const careerRequirements: Record<string, any[]> = {
     epidemiologist: [
       { name: 'Disease Surveillance', level: 'intermediate' },
       { name: 'Statistical Analysis', level: 'advanced' },
@@ -73,9 +70,9 @@ export default function SkillsGapPage() {
     const requiredSkills = careerRequirements[selectedCareer] || []
     const studentSkillMap = new Map(studentSkills.map(s => [s.name.toLowerCase(), s]))
 
-    const gaps: SkillGap[] = requiredSkills.map(reqSkill => {
+    const gaps = requiredSkills.map(reqSkill => {
       const studentSkill = studentSkillMap.get(reqSkill.name.toLowerCase())
-      
+
       const levelValues = {
         beginner: 1,
         intermediate: 2,
@@ -83,9 +80,9 @@ export default function SkillsGapPage() {
         expert: 4,
       }
 
-      const currentLevel = studentSkill?.level || 'beginner'
+      const currentLevel = (studentSkill?.level || 'beginner') as 'beginner' | 'intermediate' | 'advanced' | 'expert'
       const currentVal = levelValues[currentLevel]
-      const requiredVal = levelValues[reqSkill.level]
+      const requiredVal = levelValues[reqSkill.level as keyof typeof levelValues]
       const gap = Math.max(0, requiredVal - currentVal)
 
       let priority: 'high' | 'medium' | 'low' = 'low'

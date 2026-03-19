@@ -3,11 +3,10 @@
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuthStore } from '@/lib/auth-store'
-import { useCurrentUser, useLogout } from '@/hooks/use-auth'
+import { useCurrentUser } from '@/hooks/use-auth'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import {
-  Sparkles,
   Briefcase,
   Calendar,
   Target,
@@ -15,30 +14,28 @@ import {
   User,
   FileText,
   Award,
-  LogOut,
-  Bell,
   Search,
   TrendingUp,
   Clock,
-  CheckCircle2
+  CheckCircle2,
+  Sparkles
 } from 'lucide-react'
 
 export default function DashboardPage() {
   const router = useRouter()
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
-  const _hasHydrated = useAuthStore((state) => state._hasHydrated)
-  const { mutate: logout } = useLogout()
-  const { data, isLoading, error } = useCurrentUser()
+  const isLoading = useAuthStore((state) => state.isLoading)
+  const { data, error } = useCurrentUser()
 
   useEffect(() => {
-    if (_hasHydrated && !isAuthenticated && !isLoading) {
+    if (!isAuthenticated && !isLoading) {
       router.push('/login')
     }
-  }, [_hasHydrated, isAuthenticated, isLoading, router])
+  }, [isAuthenticated, isLoading, router])
 
-  if (!_hasHydrated || isLoading) {
+  if (isLoading) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+      <div className="flex items-center justify-center h-64">
         <div className="w-12 h-12 border-2 border-cyan-500/30 border-t-cyan-500 rounded-full animate-spin" />
       </div>
     )
@@ -49,247 +46,201 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950">
-      {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 z-50 glass-nav">
-        <div className="container mx-auto px-6 py-4">
-          <div className="flex justify-between items-center">
-            <Link href="/dashboard" className="flex items-center gap-2">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-400 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/25">
-                <Sparkles className="w-5 h-5 text-white" />
-              </div>
-              <span className="text-xl font-bold text-white">
-                Glohib<span className="text-cyan-400">.ai</span>
-              </span>
-            </Link>
+    <div className="space-y-6">
+      {/* Welcome Section */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+      >
+        <h1 className="text-2xl font-semibold text-white mb-2">
+          Welcome back, {data?.data?.email?.split('@')[0] || 'Student'}! 👋
+        </h1>
+        <p className="text-slate-400 text-sm">
+          Here's what's happening with your internship search
+        </p>
+      </motion.div>
 
-            <div className="flex items-center gap-4">
-              <button className="p-2 text-slate-400 hover:text-white transition-colors relative">
-                <Bell className="w-5 h-5" />
-                <span className="absolute top-1 right-1 w-2 h-2 bg-cyan-500 rounded-full" />
-              </button>
-              <Link
+      {/* Stats Grid - 4 Cards */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
+      >
+        <StatCard
+          title="Applications"
+          value="12"
+          change="+3 this week"
+          icon={Briefcase}
+          color="cyan"
+        />
+        <StatCard
+          title="Interviews"
+          value="3"
+          change="2 upcoming"
+          icon={Calendar}
+          color="blue"
+        />
+        <StatCard
+          title="Match Score"
+          value="85%"
+          change="+5% improvement"
+          icon={Target}
+          color="indigo"
+        />
+        <StatCard
+          title="Profile Views"
+          value="48"
+          change="+12 this week"
+          icon={TrendingUp}
+          color="violet"
+        />
+      </motion.div>
+
+      <div className="grid lg:grid-cols-3 gap-6">
+        {/* Main Column */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Quick Actions */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="glass-card rounded-2xl p-6"
+          >
+            <h2 className="text-lg font-semibold text-white mb-4">Quick Actions</h2>
+            <div className="grid sm:grid-cols-2 gap-3">
+              <QuickAction
+                href="/dashboard/internships"
+                icon={Search}
+                title="Browse Internships"
+                description="Find your perfect match"
+                color="cyan"
+              />
+              <QuickAction
                 href="/dashboard/profile"
-                className="flex items-center gap-2 p-2 rounded-xl hover:bg-white/5 transition-colors"
-              >
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center">
-                  <User className="w-4 h-4 text-white" />
-                </div>
+                icon={User}
+                title="Complete Profile"
+                description="Increase visibility"
+                color="blue"
+              />
+              <QuickAction
+                href="/dashboard/career-path"
+                icon={FileText}
+                title="Career Path"
+                description="Plan your journey"
+                color="indigo"
+              />
+              <QuickAction
+                href="/dashboard/recommendations"
+                icon={Award}
+                title="Recommendations"
+                description="AI-curated matches"
+                color="violet"
+              />
+            </div>
+          </motion.div>
+
+          {/* Recent Activity */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="glass-card rounded-2xl p-6"
+          >
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg font-semibold text-white">Recent Activity</h2>
+              <Link href="/dashboard/applications" className="text-cyan-400 text-sm hover:text-cyan-300">
+                View all
               </Link>
-              <button
-                onClick={() => logout()}
-                className="p-2 text-slate-400 hover:text-red-400 transition-colors"
-              >
-                <LogOut className="w-5 h-5" />
-              </button>
             </div>
-          </div>
-        </div>
-      </nav>
 
-      {/* Main Content */}
-      <main className="pt-24 pb-24 px-6">
-        <div className="container mx-auto max-w-7xl">
-          {/* Welcome Section */}
+            <div className="space-y-4">
+              <ActivityItem
+                icon={CheckCircle2}
+                title="Application submitted"
+                description="Software Engineer Intern at TechCorp"
+                time="2 hours ago"
+                color="green"
+              />
+              <ActivityItem
+                icon={Calendar}
+                title="Interview scheduled"
+                description="Data Science Intern at DataFlow"
+                time="Yesterday"
+                color="blue"
+              />
+              <ActivityItem
+                icon={Target}
+                title="Profile viewed"
+                description="Your profile was viewed by InnovateTech"
+                time="2 days ago"
+                color="cyan"
+              />
+            </div>
+          </motion.div>
+        </div>
+
+        {/* Sidebar */}
+        <div className="space-y-6">
+          {/* Profile Completion */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mb-8"
+            transition={{ delay: 0.4 }}
+            className="glass-card rounded-2xl p-6"
           >
-            <h1 className="text-3xl font-bold text-white mb-2">
-              Welcome back, {data?.data?.email?.split('@')[0] || 'Student'}! 👋
-            </h1>
-            <p className="text-slate-400">
-              Here's what's happening with your internship search
-            </p>
+            <h2 className="text-lg font-semibold text-white mb-4">Profile Completion</h2>
+            <div className="relative pt-2">
+              <div className="flex justify-between text-sm mb-2">
+                <span className="text-slate-400">75% Complete</span>
+                <span className="text-cyan-400">+25% to go</span>
+              </div>
+              <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+                <div className="h-full w-3/4 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-full" />
+              </div>
+            </div>
+
+            <div className="mt-4 space-y-2">
+              <CheckItem text="Basic information" completed />
+              <CheckItem text="Education details" completed />
+              <CheckItem text="Skills & expertise" completed />
+              <CheckItem text="Work experience" />
+              <CheckItem text="Portfolio projects" />
+            </div>
+
+            <Link
+              href="/dashboard/profile"
+              className="mt-4 block text-center py-2.5 rounded-xl glass-button-secondary text-sm"
+            >
+              Complete Profile
+            </Link>
           </motion.div>
 
-          {/* Stats Grid */}
+          {/* Upcoming Events */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="grid md:grid-cols-4 gap-4 mb-8"
+            transition={{ delay: 0.5 }}
+            className="glass-card rounded-2xl p-6"
           >
-            <StatCard
-              title="Applications"
-              value="12"
-              change="+3 this week"
-              icon={Briefcase}
-              color="cyan"
-            />
-            <StatCard
-              title="Interviews"
-              value="3"
-              change="2 upcoming"
-              icon={Calendar}
-              color="blue"
-            />
-            <StatCard
-              title="Match Score"
-              value="85%"
-              change="+5% improvement"
-              icon={Target}
-              color="indigo"
-            />
-            <StatCard
-              title="Profile Views"
-              value="48"
-              change="+12 this week"
-              icon={TrendingUp}
-              color="violet"
-            />
+            <h2 className="text-lg font-semibold text-white mb-4">Upcoming</h2>
+            <div className="space-y-3">
+              <EventCard
+                title="Technical Interview"
+                company="TechCorp"
+                date="Today, 2:00 PM"
+                type="interview"
+              />
+              <EventCard
+                title="Application Deadline"
+                company="InnovateTech"
+                date="Tomorrow, 11:59 PM"
+                type="deadline"
+              />
+            </div>
           </motion.div>
-
-          <div className="grid lg:grid-cols-3 gap-6">
-            {/* Main Column */}
-            <div className="lg:col-span-2 space-y-6">
-              {/* Quick Actions */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-                className="glass-card rounded-2xl p-6"
-              >
-                <h2 className="text-lg font-semibold text-white mb-4">Quick Actions</h2>
-                <div className="grid sm:grid-cols-2 gap-3">
-                  <QuickAction
-                    href="/dashboard/internships"
-                    icon={Search}
-                    title="Browse Internships"
-                    description="Find your perfect match"
-                    color="cyan"
-                  />
-                  <QuickAction
-                    href="/dashboard/profile"
-                    icon={User}
-                    title="Complete Profile"
-                    description="Increase visibility"
-                    color="blue"
-                  />
-                  <QuickAction
-                    href="/dashboard/assessments"
-                    icon={FileText}
-                    title="Take Assessments"
-                    description="Showcase your skills"
-                    color="indigo"
-                  />
-                  <QuickAction
-                    href="/dashboard/recommendations"
-                    icon={Award}
-                    title="View Recommendations"
-                    description="AI-curated matches"
-                    color="violet"
-                  />
-                </div>
-              </motion.div>
-
-              {/* Recent Activity */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
-                className="glass-card rounded-2xl p-6"
-              >
-                <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-lg font-semibold text-white">Recent Activity</h2>
-                  <Link href="/dashboard/activity" className="text-cyan-400 text-sm hover:text-cyan-300">
-                    View all
-                  </Link>
-                </div>
-
-                <div className="space-y-4">
-                  <ActivityItem
-                    icon={CheckCircle2}
-                    title="Application submitted"
-                    description="Software Engineer Intern at TechCorp"
-                    time="2 hours ago"
-                    color="green"
-                  />
-                  <ActivityItem
-                    icon={Calendar}
-                    title="Interview scheduled"
-                    description="Data Science Intern at DataFlow"
-                    time="Yesterday"
-                    color="blue"
-                  />
-                  <ActivityItem
-                    icon={Target}
-                    title="Profile viewed"
-                    description="Your profile was viewed by InnovateTech"
-                    time="2 days ago"
-                    color="cyan"
-                  />
-                </div>
-              </motion.div>
-            </div>
-
-            {/* Sidebar */}
-            <div className="space-y-6">
-              {/* Profile Completion */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4 }}
-                className="glass-card rounded-2xl p-6"
-              >
-                <h2 className="text-lg font-semibold text-white mb-4">Profile Completion</h2>
-                <div className="relative pt-2">
-                  <div className="flex justify-between text-sm mb-2">
-                    <span className="text-slate-400">75% Complete</span>
-                    <span className="text-cyan-400">+25% to go</span>
-                  </div>
-                  <div className="h-2 bg-white/10 rounded-full overflow-hidden">
-                    <div className="h-full w-3/4 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-full" />
-                  </div>
-                </div>
-
-                <div className="mt-4 space-y-2">
-                  <CheckItem text="Basic information" completed />
-                  <CheckItem text="Education details" completed />
-                  <CheckItem text="Skills & expertise" completed />
-                  <CheckItem text="Work experience" />
-                  <CheckItem text="Portfolio projects" />
-                </div>
-
-                <Link
-                  href="/dashboard/profile"
-                  className="mt-4 block text-center py-2.5 rounded-xl glass-button-secondary text-sm"
-                >
-                  Complete Profile
-                </Link>
-              </motion.div>
-
-              {/* Upcoming Events */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.5 }}
-                className="glass-card rounded-2xl p-6"
-              >
-                <h2 className="text-lg font-semibold text-white mb-4">Upcoming</h2>
-                <div className="space-y-3">
-                  <EventCard
-                    title="Technical Interview"
-                    company="TechCorp"
-                    date="Today, 2:00 PM"
-                    type="interview"
-                  />
-                  <EventCard
-                    title="Application Deadline"
-                    company="InnovateTech"
-                    date="Tomorrow, 11:59 PM"
-                    type="deadline"
-                  />
-                </div>
-              </motion.div>
-            </div>
-          </div>
         </div>
-      </main>
-
-      {/* Mobile Bottom Navigation */}
-      <MobileNav />
+      </div>
     </div>
   )
 }
@@ -437,31 +388,5 @@ function EventCard({
       </div>
       <span className="text-xs text-slate-500">{date}</span>
     </div>
-  )
-}
-
-function MobileNav() {
-  const navItems = [
-    { href: '/dashboard', icon: Sparkles, label: 'Home' },
-    { href: '/dashboard/internships', icon: Briefcase, label: 'Jobs' },
-    { href: '/dashboard/assessments', icon: FileText, label: 'Tests' },
-    { href: '/dashboard/profile', icon: User, label: 'Profile' },
-  ]
-
-  return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 glass-nav md:hidden">
-      <div className="grid grid-cols-4 gap-1">
-        {navItems.map((item) => (
-          <Link
-            key={item.href}
-            href={item.href}
-            className="flex flex-col items-center py-3 px-2 text-slate-400 hover:text-cyan-400 transition-colors"
-          >
-            <item.icon className="w-5 h-5 mb-1" />
-            <span className="text-xs">{item.label}</span>
-          </Link>
-        ))}
-      </div>
-    </nav>
   )
 }

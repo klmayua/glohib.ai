@@ -5,12 +5,9 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { TrendingUp, ArrowRight, Briefcase, GraduationCap, Target, Star, MapPin, DollarSign } from 'lucide-react'
 import { Card, Button, Badge } from '@/components/ui'
-import { useDashboardIntegration } from '@/core/integration/dashboardIntegration'
-import type { Skill } from '@/features/matching/matchEngine'
 
 export default function CareerPathPage() {
   const router = useRouter()
-  const { findMissingSkills, getSkillGap } = useDashboardIntegration()
   const [selectedRole, setSelectedRole] = useState<string>('epidemiologist')
 
   // Career path data
@@ -96,7 +93,7 @@ export default function CareerPathPage() {
   const selectedPath = careerPaths.find(p => p.id === selectedRole)
 
   // Mock student skills - in real app, fetch from API
-  const studentSkills: Skill[] = [
+  const studentSkills = [
     { name: 'Data Analysis', level: 'intermediate' },
     { name: 'Python', level: 'intermediate' },
     { name: 'Communication', level: 'advanced' },
@@ -218,7 +215,7 @@ export default function CareerPathPage() {
             </h3>
             <div className="flex flex-wrap gap-2">
               {selectedPath.skills.map((skill, index) => (
-                <Badge key={index} variant="secondary">
+                <Badge key={index} variant="info">
                   {skill}
                 </Badge>
               ))}

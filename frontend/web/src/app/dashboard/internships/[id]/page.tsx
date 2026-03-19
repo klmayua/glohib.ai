@@ -20,7 +20,7 @@ export default function InternshipDetailPage() {
     posted: '2 days ago',
     match: 92,
     department: 'Product',
-    description: 'We're looking for a Product Management Intern to join our team and help shape the future of our products. You'll work closely with senior PMs to define product strategy, conduct user research, and drive product development.',
+    description: 'We are looking for a Product Management Intern to join our team and help shape the future of our products. You will work closely with senior PMs to define product strategy, conduct user research, and drive product development.',
     requirements: [
       'Currently pursuing a degree in Business, Computer Science, or related field',
       'Strong analytical and problem-solving skills',

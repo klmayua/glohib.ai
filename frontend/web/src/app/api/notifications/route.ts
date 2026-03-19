@@ -63,17 +63,35 @@ export async function GET(request: NextRequest) {
  */
 export async function PUT(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    // Get user from cookie-based auth
+    const authCookie = request.cookies.get('access_token')?.value
 
-    if (!session?.user?.email) {
+    if (!authCookie) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
+    // Fetch user info from identity service
+    const userResponse = await fetch('http://localhost:8080/api/v1/auth/me', {
+      headers: {
+        'Authorization': `Bearer ${authCookie}`,
+      },
     })
 
-    if (!user) {
+    if (!userResponse.ok) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const user = await userResponse.json()
+
+    if (!user?.email) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 })
+    }
+
+    const dbUser = await prisma.user.findUnique({
+      where: { email: user.email },
+    })
+
+    if (!dbUser) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 
@@ -82,7 +100,7 @@ export async function PUT(request: NextRequest) {
 
     if (markAllRead) {
       await prisma.notification.updateMany({
-        where: { userId: user.id, isRead: false },
+        where: { userId: dbUser.id, isRead: false },
         data: {
           isRead: true,
           readAt: new Date(),
@@ -92,7 +110,7 @@ export async function PUT(request: NextRequest) {
       await prisma.notification.updateMany({
         where: {
           id: { in: notificationIds },
-          userId: user.id,
+          userId: dbUser.id,
         },
         data: {
           isRead: true,
