@@ -10,8 +10,8 @@ export const metadata: Metadata = {
   description: 'AI-powered internship matching platform',
 }
 
-// Only pages that need dynamic rendering should opt in individually
-// Removed force-dynamic from root layout to allow static pages (landing, 404) to be cached
+// Force dynamic rendering — API routes use request.cookies which requires dynamic mode
+export const dynamic = 'force-dynamic'
 
 export default function RootLayout({
   children,
