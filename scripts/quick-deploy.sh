@@ -15,34 +15,37 @@ echo "Quick Deploy - Glohib.ai"
 echo "------------------------"
 
 # Sync source files
-echo "[1/4] Syncing source files..."
+echo "[1/5] Syncing source files..."
 rsync -a --delete "$SRC_DIR/frontend/web/src/" "$WEB_DIR/src/"
 cp "$SRC_DIR/frontend/web/Dockerfile" "$WEB_DIR/Dockerfile"
 cp "$SRC_DIR/frontend/web/.dockerignore" "$WEB_DIR/.dockerignore"
 cp "$SRC_DIR/docker-compose.yml" "$APP_DIR/docker-compose.yml" 2>/dev/null || true
 
 # Build
-echo "[2/4] Building application..."
+echo "[2/5] Building application..."
 cd "$WEB_DIR"
 npm run build
 
 # Copy static assets into standalone (required for standalone mode)
-echo "[3/4] Preparing standalone output..."
+echo "[3/5] Preparing standalone output..."
 cp -r "$WEB_DIR/.next/static" "$WEB_DIR/.next/standalone/.next/static"
 if [ -d "$WEB_DIR/public" ]; then
   cp -r "$WEB_DIR/public" "$WEB_DIR/.next/standalone/public"
 fi
 
-# Restart PM2
-echo "[4/4] Restarting application..."
-pm2 restart "$APP_NAME"
+# Restart PM2 with ecosystem config (loads .env.production)
+echo "[4/5] Restarting application..."
+pm2 delete "$APP_NAME" 2>/dev/null || true
+pm2 start "$WEB_DIR/ecosystem.config.js"
 
+echo "[5/5] Health check..."
 sleep 2
 STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3000)
 if [ "$STATUS" = "200" ]; then
   echo ""
   echo "Deployment complete! Health check: 200 OK"
   echo "  View logs: pm2 logs $APP_NAME --lines 50"
+  pm2 save
 else
   echo ""
   echo "WARNING: Health check returned $STATUS"

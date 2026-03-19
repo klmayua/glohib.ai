@@ -10,9 +10,6 @@ export const metadata: Metadata = {
   description: 'AI-powered internship matching platform',
 }
 
-// Force dynamic rendering — API routes use request.cookies which requires dynamic mode
-export const dynamic = 'force-dynamic'
-
 export default function RootLayout({
   children,
 }: {
