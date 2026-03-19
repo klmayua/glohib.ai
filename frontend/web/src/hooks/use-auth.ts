@@ -29,13 +29,9 @@ export function useLogin() {
 }
 
 export function useRegister() {
-  const router = useRouter()
-
   return useMutation({
     mutationFn: authAPI.register,
-    onSuccess: () => {
-      router.push('/login')
-    },
+    // Success redirect handled by the register page component
   })
 }
 

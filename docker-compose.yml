@@ -285,7 +285,7 @@ services:
     environment:
       <<: *common-variables
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
-      POSTGRES_DSN: "postgresql+psycopg2://glohib:${POSTGRES_PASSWORD:-GlohibAI_DB_Secure_2026!}@postgres:5432/glohib_db"
+      POSTGRES_DSN: "postgresql+psycopg2://glohib:${POSTGRES_PASSWORD:-changeme}@postgres:5432/glohib_db"
     ports:
       - "${RECOMMENDATION_PORT:-8007}:8007"
     depends_on:
@@ -425,7 +425,7 @@ services:
       - "${FRONTEND_PORT:-3000}:3000"
     depends_on:
       identity-service:
-        condition: service_healthy
+        condition: service_started
     healthcheck:
       test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://localhost:3000"]
       interval: 15s

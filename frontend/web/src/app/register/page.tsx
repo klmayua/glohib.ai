@@ -40,7 +40,7 @@ export default function RegisterPage() {
         onSuccess: () => {
           setSuccess(true)
           setTimeout(() => {
-            router.push('/login')
+            router.push(`/verify?email=${encodeURIComponent(formData.email)}`)
           }, 2000)
         },
         onError: (err: any) => {
@@ -99,8 +99,8 @@ export default function RegisterPage() {
                 <CheckCircle2 className="w-8 h-8 text-green-400" />
               </div>
               <h2 className="text-2xl font-bold text-white mb-2">Account Created!</h2>
-              <p className="text-slate-400 mb-4">Your account has been successfully created. Redirecting to login...</p>
-              <Link href="/login" className="text-cyan-400 hover:text-cyan-300">
+              <p className="text-slate-400 mb-4">Please check your email to verify your account.</p>
+              <Link href={`/verify?email=${encodeURIComponent(formData.email)}`} className="text-cyan-400 hover:text-cyan-300">
                 Click here if not redirected
               </Link>
             </motion.div>

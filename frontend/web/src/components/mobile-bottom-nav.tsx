@@ -2,13 +2,14 @@
 
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
-import { Home, Search, Globe, User } from 'lucide-react'
+import { Home, Search, FileText, Heart, User } from 'lucide-react'
 
 const navItems = [
-  { icon: Home, label: 'Home', route: '/' },
+  { icon: Home, label: 'Home', route: '/dashboard' },
   { icon: Search, label: 'Explore', route: '/dashboard/internships' },
-  { icon: Globe, label: 'Global Map', route: '/dashboard/map' },
-  { icon: User, label: 'Profile', route: '/dashboard' },
+  { icon: FileText, label: 'Applications', route: '/dashboard/applications' },
+  { icon: Heart, label: 'Saved', route: '/dashboard/saved' },
+  { icon: User, label: 'Profile', route: '/dashboard/profile' },
 ]
 
 export function MobileBottomNav() {
@@ -20,15 +21,17 @@ export function MobileBottomNav() {
         <div className="flex items-center justify-around py-3">
           {navItems.map((item) => {
             const Icon = item.icon
-            const isActive = pathname === item.route
-            
+            const isActive = item.route === '/dashboard'
+              ? pathname === '/dashboard'
+              : pathname.startsWith(item.route)
+
             return (
               <Link
                 key={item.route}
                 href={item.route}
                 className={`flex flex-col items-center gap-1 px-3 py-1 rounded-xl transition-all ${
                   isActive
-                    ? 'text-blue-500 bg-blue-500/10'
+                    ? 'text-sky-400 bg-sky-500/10'
                     : 'text-slate-400 hover:text-slate-300'
                 }`}
               >

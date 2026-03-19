@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useLogin } from '@/hooks/use-auth'
 import { motion } from 'framer-motion'
+import { signIn } from 'next-auth/react'
 import { Sparkles, Mail, Lock, ArrowRight, Github, Chrome } from 'lucide-react'
 
 export default function LoginPage() {
@@ -77,11 +78,19 @@ export default function LoginPage() {
 
           {/* Social Login */}
           <div className="grid grid-cols-2 gap-3 mb-6">
-            <button className="glass-button-secondary py-2.5 rounded-sm flex items-center justify-center gap-2 text-sm">
+            <button
+              type="button"
+              onClick={() => signIn('google', { callbackUrl: '/dashboard' })}
+              className="glass-button-secondary py-2.5 rounded-sm flex items-center justify-center gap-2 text-sm"
+            >
               <Chrome className="w-5 h-5" />
               Google
             </button>
-            <button className="glass-button-secondary py-2.5 rounded-sm flex items-center justify-center gap-2 text-sm">
+            <button
+              type="button"
+              onClick={() => signIn('github', { callbackUrl: '/dashboard' })}
+              className="glass-button-secondary py-2.5 rounded-sm flex items-center justify-center gap-2 text-sm"
+            >
               <Github className="w-5 h-5" />
               GitHub
             </button>

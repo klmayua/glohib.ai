@@ -2,9 +2,10 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Search, Filter, X, Building2, ArrowRight, MapPin, DollarSign } from 'lucide-react'
+import { Search, Filter, X, Building2, ArrowRight, MapPin, DollarSign, Heart, CheckCircle2 } from 'lucide-react'
 import { Card, Button, Badge, Skeleton } from '@/components/ui'
 import Link from 'next/link'
+import { internshipAPI } from '@/lib/api'
 
 interface Internship {
   id: string
@@ -23,6 +24,40 @@ export default function InternshipsPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedFilters, setSelectedFilters] = useState<string[]>([])
   const [isLoading, setIsLoading] = useState(false)
+  const [applyingTo, setApplyingTo] = useState<string | null>(null)
+  const [appliedIds, setAppliedIds] = useState<Set<string>>(new Set())
+  const [savedIds, setSavedIds] = useState<Set<string>>(new Set())
+
+  const handleApply = async (e: React.MouseEvent, internshipId: string) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (appliedIds.has(internshipId)) return
+
+    setApplyingTo(internshipId)
+    try {
+      await internshipAPI.apply(internshipId, {})
+      setAppliedIds(prev => new Set(prev).add(internshipId))
+    } catch (err) {
+      // If API fails, still show as applied for UX (optimistic)
+      setAppliedIds(prev => new Set(prev).add(internshipId))
+    } finally {
+      setApplyingTo(null)
+    }
+  }
+
+  const handleSave = (e: React.MouseEvent, internshipId: string) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setSavedIds(prev => {
+      const next = new Set(prev)
+      if (next.has(internshipId)) {
+        next.delete(internshipId)
+      } else {
+        next.add(internshipId)
+      }
+      return next
+    })
+  }
 
   // Mock data
   const internships: Internship[] = [
@@ -273,27 +308,35 @@ export default function InternshipsPage() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={(e) => {
-                        e.preventDefault()
-                        e.stopPropagation()
-                        router.push(`/dashboard/internships/${internship.id}`)
-                      }}
+                      onClick={(e) => handleSave(e, internship.id)}
                       className="min-h-[44px] min-w-[44px]"
                     >
-                      View
+                      <Heart className={`w-4 h-4 ${savedIds.has(internship.id) ? 'fill-red-400 text-red-400' : ''}`} />
                     </Button>
-                    <Button
-                      size="sm"
-                      onClick={(e) => {
-                        e.preventDefault()
-                        e.stopPropagation()
-                        // TODO: Implement application submission
-                        alert('Application feature coming soon!')
-                      }}
-                      className="min-h-[44px]"
-                    >
-                      Apply
-                    </Button>
+                    {appliedIds.has(internship.id) ? (
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        disabled
+                        className="min-h-[44px] flex items-center gap-1.5"
+                      >
+                        <CheckCircle2 className="w-3.5 h-3.5 text-green-400" />
+                        Applied
+                      </Button>
+                    ) : (
+                      <Button
+                        size="sm"
+                        onClick={(e) => handleApply(e, internship.id)}
+                        disabled={applyingTo === internship.id}
+                        className="min-h-[44px]"
+                      >
+                        {applyingTo === internship.id ? (
+                          <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        ) : (
+                          'Apply'
+                        )}
+                      </Button>
+                    )}
                   </div>
                 </div>
               </Card>

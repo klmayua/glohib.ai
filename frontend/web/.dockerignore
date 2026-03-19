@@ -4,3 +4,13 @@
 node_modules
 .next
 Dockerfile
+.dockerignore
+.eslintrc*
+.prettierrc*
+tsconfig.tsbuildinfo
+.vscode
+.idea
+tests
+__tests__
+*.test.*
+*.spec.*

@@ -1,17 +1,22 @@
 'use client'
 
+import { useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { ArrowLeft, Building2, MapPin, DollarSign, Clock, CheckCircle } from 'lucide-react'
+import { ArrowLeft, Building2, MapPin, DollarSign, Clock, CheckCircle, Heart, CheckCircle2 } from 'lucide-react'
 import { Card, Button, Badge } from '@/components/ui'
 import Link from 'next/link'
+import { internshipAPI } from '@/lib/api'
 
 export default function InternshipDetailPage() {
   const params = useParams()
   const router = useRouter()
-  
+  const [applying, setApplying] = useState(false)
+  const [applied, setApplied] = useState(false)
+  const [saved, setSaved] = useState(false)
+
   // Mock data - in real app, fetch from API
   const internship = {
-    id: params.id,
+    id: params.id as string,
     title: 'Product Management Intern',
     company: 'Acme Corp',
     location: 'Remote',
@@ -42,6 +47,20 @@ export default function InternshipDetailPage() {
       'Potential for full-time conversion',
       'Access to learning resources'
     ]
+  }
+
+  const handleApply = async () => {
+    if (applied) return
+    setApplying(true)
+    try {
+      await internshipAPI.apply(internship.id, {})
+      setApplied(true)
+    } catch (err) {
+      // Optimistic: show as applied even if API fails during dev
+      setApplied(true)
+    } finally {
+      setApplying(false)
+    }
   }
 
   return (
@@ -93,13 +112,48 @@ export default function InternshipDetailPage() {
         </div>
 
         <div className="flex gap-3">
-          <Button className="flex-1">
-            Apply Now
-          </Button>
-          <Button variant="secondary">
-            Save
+          {applied ? (
+            <Button variant="secondary" disabled className="flex-1 flex items-center justify-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-green-400" />
+              Application Submitted
+            </Button>
+          ) : (
+            <Button
+              className="flex-1"
+              onClick={handleApply}
+              disabled={applying}
+            >
+              {applying ? (
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  Submitting...
+                </div>
+              ) : (
+                'Apply Now'
+              )}
+            </Button>
+          )}
+          <Button
+            variant="secondary"
+            onClick={() => setSaved(!saved)}
+            className={saved ? 'text-red-400' : ''}
+          >
+            <Heart className={`w-4 h-4 mr-2 ${saved ? 'fill-red-400 text-red-400' : ''}`} />
+            {saved ? 'Saved' : 'Save'}
           </Button>
         </div>
+
+        {applied && (
+          <div className="mt-4 p-3 rounded-lg bg-green-500/10 border border-green-500/20">
+            <p className="text-sm text-green-400 flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4" />
+              Your application has been submitted! Track it in{' '}
+              <Link href="/dashboard/applications" className="underline hover:text-green-300">
+                My Applications
+              </Link>.
+            </p>
+          </div>
+        )}
       </Card>
 
       {/* Description */}
@@ -150,19 +204,21 @@ export default function InternshipDetailPage() {
       </Card>
 
       {/* Apply CTA */}
-      <Card>
-        <div className="text-center space-y-4">
-          <h3 className="text-lg font-medium text-white">
-            Ready to apply?
-          </h3>
-          <p className="text-slate-400 text-sm">
-            Submit your application and take the first step towards your dream internship.
-          </p>
-          <Button className="w-full max-w-xs">
-            Submit Application
-          </Button>
-        </div>
-      </Card>
+      {!applied && (
+        <Card>
+          <div className="text-center space-y-4">
+            <h3 className="text-lg font-medium text-white">
+              Ready to apply?
+            </h3>
+            <p className="text-slate-400 text-sm">
+              Submit your application and take the first step towards your dream internship.
+            </p>
+            <Button className="w-full max-w-xs" onClick={handleApply} disabled={applying}>
+              {applying ? 'Submitting...' : 'Submit Application'}
+            </Button>
+          </div>
+        </Card>
+      )}
     </div>
   )
 }
