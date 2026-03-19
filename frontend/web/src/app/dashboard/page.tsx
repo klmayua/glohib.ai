@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation'
 import { useAuthStore } from '@/lib/auth-store'
 import { useCurrentUser } from '@/hooks/use-auth'
 import Link from 'next/link'
-import { motion } from 'framer-motion'
 import {
   Briefcase,
   Calendar,
@@ -92,9 +91,7 @@ export default function DashboardPage() {
 
 function DashboardHeader({ userName }: { userName: string }) {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
+    <div
       className="glass-card rounded-2xl p-6"
     >
       <div className="flex items-center justify-between">
@@ -111,7 +108,7 @@ function DashboardHeader({ userName }: { userName: string }) {
           <span className="text-sm text-cyan-300">AI Match Score: 85%</span>
         </div>
       </div>
-    </motion.div>
+    </div>
   )
 }
 
@@ -169,10 +166,7 @@ function DashboardStats() {
   ]
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.1 }}
+    <div
       className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
     >
       {stats.map((stat, index) => (
@@ -182,7 +176,7 @@ function DashboardStats() {
           delay={index * 0.05}
         />
       ))}
-    </motion.div>
+    </div>
   )
 }
 
@@ -211,10 +205,7 @@ function StatCard({
   }
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay }}
+    <div
       className="glass-card rounded-2xl p-5"
     >
       <div className="flex items-start justify-between">
@@ -232,7 +223,7 @@ function StatCard({
           <Icon className="w-5 h-5" />
         </div>
       </div>
-    </motion.div>
+    </div>
   )
 }
 
@@ -273,10 +264,7 @@ function DashboardRecommendations() {
   ]
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.2 }}
+    <div
       className="glass-card rounded-2xl p-6"
     >
       <div className="flex justify-between items-center mb-4">
@@ -332,7 +320,7 @@ function DashboardRecommendations() {
           </Link>
         ))}
       </div>
-    </motion.div>
+    </div>
   )
 }
 
@@ -373,10 +361,7 @@ function DashboardActivity() {
   ]
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.3 }}
+    <div
       className="glass-card rounded-2xl p-6"
     >
       <div className="flex justify-between items-center mb-4">
@@ -398,7 +383,7 @@ function DashboardActivity() {
           <ActivityItem key={activity.id} {...activity} />
         ))}
       </div>
-    </motion.div>
+    </div>
   )
 }
 
@@ -472,10 +457,7 @@ function DashboardActions() {
   ]
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.4 }}
+    <div
       className="glass-card rounded-2xl p-6"
     >
       <div className="flex items-center gap-2 mb-4">
@@ -488,7 +470,7 @@ function DashboardActions() {
           <QuickAction key={action.href} {...action} delay={index * 0.05} />
         ))}
       </div>
-    </motion.div>
+    </div>
   )
 }
 
@@ -515,11 +497,7 @@ function QuickAction({
   }
 
   return (
-    <motion.div
-      initial={{ opacity: 0, x: -10 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ delay }}
-    >
+    <div>
       <Link
         href={href}
         className="group flex items-center gap-4 p-4 rounded-xl bg-white/5 hover:bg-white/10 transition-all duration-300 border border-white/[0.08] hover:border-cyan-500/30"
@@ -535,7 +513,7 @@ function QuickAction({
         </div>
         <ArrowRight className="w-5 h-5 text-slate-500 group-hover:text-cyan-400 group-hover:translate-x-1 transition-all" />
       </Link>
-    </motion.div>
+    </div>
   )
 }
 
@@ -553,10 +531,7 @@ function ProfileCompletionCard() {
   ]
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.5 }}
+    <div
       className="glass-card rounded-2xl p-6"
     >
       <h2 className="text-lg font-semibold text-white mb-4">Profile Completion</h2>
@@ -582,7 +557,7 @@ function ProfileCompletionCard() {
       >
         Complete Profile
       </Link>
-    </motion.div>
+    </div>
   )
 }
 
@@ -618,10 +593,7 @@ function UpcomingEventsCard() {
   ]
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.6 }}
+    <div
       className="glass-card rounded-2xl p-6"
     >
       <h2 className="text-lg font-semibold text-white mb-4">Upcoming</h2>
@@ -630,7 +602,7 @@ function UpcomingEventsCard() {
           <EventCard key={event.title} {...event} />
         ))}
       </div>
-    </motion.div>
+    </div>
   )
 }
 

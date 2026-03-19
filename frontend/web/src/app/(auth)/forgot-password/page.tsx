@@ -2,8 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { motion } from 'framer-motion'
-import { Sparkles, Mail, ArrowLeft } from 'lucide-react'
+import { Sparkles, Mail } from 'lucide-react'
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('')
@@ -43,19 +42,9 @@ export default function ForgotPasswordPage() {
       <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-cyan-500/10 rounded-full blur-[64px]" />
       <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-blue-600/10 rounded-full blur-[64px]" />
 
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.2 }}
-        className="relative z-10 max-w-md w-full"
-      >
+      <div className="relative z-10 max-w-md w-full anim-fade-in-scale">
         {/* Logo */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="text-center mb-8"
-        >
+        <div className="text-center mb-8 anim-fade-in-down anim-delay-1">
           <Link href="/" className="inline-flex items-center gap-2">
             <div className="w-12 h-12 rounded-sm bg-gradient-to-br from-cyan-400 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/25">
               <Sparkles className="w-6 h-6 text-white" />
@@ -64,14 +53,9 @@ export default function ForgotPasswordPage() {
               Glohib<span className="text-cyan-400">.ai</span>
             </span>
           </Link>
-        </motion.div>
+        </div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.15 }}
-          className="glass-card rounded-sm p-8"
-        >
+        <div className="glass-card rounded-sm p-8 anim-fade-in-up anim-delay-2">
           {success ? (
             <div className="text-center">
               <div className="w-16 h-16 rounded-sm bg-green-500/20 flex items-center justify-center mx-auto mb-4">
@@ -103,13 +87,9 @@ export default function ForgotPasswordPage() {
               </div>
 
               {error && (
-                <motion.div
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-sm mb-6 text-sm"
-                >
+                <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-sm mb-6 text-sm anim-fade-in-up">
                   {error}
-                </motion.div>
+                </div>
               )}
 
               <form onSubmit={handleSubmit} className="space-y-5">
@@ -153,19 +133,14 @@ export default function ForgotPasswordPage() {
               Sign in
             </Link>
           </p>
-        </motion.div>
+        </div>
 
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.5 }}
-          className="text-center mt-6"
-        >
+        <div className="text-center mt-6 anim-fade-in anim-delay-6">
           <Link href="/" className="text-slate-500 hover:text-slate-300 transition-colors text-sm">
             ← Back to home
           </Link>
-        </motion.div>
-      </motion.div>
+        </div>
+      </div>
     </div>
   )
 }
