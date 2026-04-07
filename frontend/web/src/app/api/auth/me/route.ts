@@ -1,25 +1,71 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { PrismaClient } from '@prisma/client'
+
+const prisma = new PrismaClient()
 
 export async function GET(request: NextRequest) {
   try {
-    // Get token from cookie (access_token set by login route)
-    const token = request.cookies.get('access_token')?.value
+    // Get session token from cookie
+    const sessionToken = request.cookies.get('session_token')?.value
+    const userId = request.cookies.get('user_id')?.value
 
-    if (!token) {
+    console.log('Auth me - sessionToken:', sessionToken ? 'present' : 'missing')
+    console.log('Auth me - userId:', userId)
+
+    if (!sessionToken || !userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const response = await fetch('http://localhost:8080/api/v1/auth/me', {
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
+    // Decode session token to get user ID and verify it's recent
+    try {
+      const decoded = Buffer.from(sessionToken, 'base64').toString('utf-8')
+      const [tokenUserId, timestamp] = decoded.split(':')
+      
+      console.log('Decoded token - userId:', tokenUserId, 'timestamp:', timestamp)
+      
+      // Verify user ID matches
+      if (tokenUserId !== userId) {
+        console.log('User ID mismatch:', tokenUserId, '!=', userId)
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      }
+
+      // Check if session is not too old (7 days max)
+      const sessionAge = Date.now() - parseInt(timestamp)
+      const maxAge = 7 * 24 * 60 * 60 * 1000 // 7 days
+      console.log('Session age:', sessionAge, 'max:', maxAge)
+      if (sessionAge > maxAge) {
+        return NextResponse.json({ error: 'Session expired' }, { status: 401 })
+      }
+    } catch (decodeError) {
+      console.error('Token decode error:', decodeError)
+      return NextResponse.json({ error: 'Invalid session' }, { status: 401 })
+    }
+
+    // Fetch user from database
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        studentProfile: true,
+        employerProfile: true,
+        mentorProfile: true,
       },
     })
 
-    const data = await response.json()
-    return NextResponse.json(data, { status: response.status })
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 })
+    }
+
+    // Remove sensitive fields
+    const { password, ...userWithoutPassword } = user
+
+    return NextResponse.json({
+      success: true,
+      data: userWithoutPassword,
+    })
   } catch (error) {
     console.error('Auth me error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  } finally {
+    await prisma.$disconnect()
   }
 }

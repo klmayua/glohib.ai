@@ -39,7 +39,7 @@ export default function RegisterPage() {
         onSuccess: () => {
           setSuccess(true)
           setTimeout(() => {
-            router.push(`/verify?email=${encodeURIComponent(formData.email)}`)
+            router.push(`/login?registered=true&email=${encodeURIComponent(formData.email)}`)
           }, 2000)
         },
         onError: (err: any) => {

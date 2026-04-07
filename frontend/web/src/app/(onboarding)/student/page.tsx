@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { useSession } from 'next-auth/react'
+import { useAuthStore } from '@/lib/auth-store'
 
 interface Skill {
   name: string
@@ -39,7 +39,7 @@ interface Interest {
 
 export default function StudentOnboardingPage() {
   const router = useRouter()
-  const { data: session } = useSession()
+  const authUser = useAuthStore((state) => state.user)
   const [step, setStep] = useState(1)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')

@@ -13,12 +13,15 @@ export function useLogin() {
   return useMutation({
     mutationFn: authAPI.login,
     onSuccess: (response) => {
-      const { user, tokens } = response.data
-      // Store user info (token is in httpOnly cookie)
+      const { user } = response.data
+      // Store user info in zustand store (persisted to localStorage)
       login({
         id: user.id,
         email: user.email,
-        roles: user.roles || ['student']
+        role: user.role,
+        studentProfile: user.studentProfile,
+        employerProfile: user.employerProfile,
+        mentorProfile: user.mentorProfile,
       })
       // Invalidate any existing queries
       queryClient.invalidateQueries({ queryKey: ['currentUser'] })
@@ -49,9 +52,13 @@ export function useLogout() {
 }
 
 export function useCurrentUser() {
-  return useQuery({
-    queryKey: ['currentUser'],
-    queryFn: authAPI.me,
-    retry: false,
-  })
+  const storedUser = useAuthStore((state) => state.user)
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
+
+  // Return stored user data instead of making API call
+  return {
+    data: storedUser ? { success: true, data: storedUser } : null,
+    error: null,
+    isLoading: !storedUser && isAuthenticated,
+  }
 }

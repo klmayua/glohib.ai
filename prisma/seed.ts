@@ -186,7 +186,7 @@ async function main() {
           companyWebsite: 'https://www.unicef.org',
           companySize: '500+',
           industry: 'International Development',
-          companyDescription: 'UNICEF works in over 190 countries and territories to save children's lives, defend their rights, and help them fulfill their potential.',
+          companyDescription: 'UNICEF works in over 190 countries and territories to save children\'s lives, defend their rights, and help them fulfill their potential.',
           headquarters: 'New York, USA',
           foundedYear: 1946,
           isVerified: true,
@@ -221,6 +221,15 @@ async function main() {
       },
     },
   })
+
+  // Fetch employer profiles for existing users
+  const employer1Profile = await prisma.employerProfile.findUnique({ where: { userId: employer1.id } })
+  const employer2Profile = await prisma.employerProfile.findUnique({ where: { userId: employer2.id } })
+  const employer3Profile = await prisma.employerProfile.findUnique({ where: { userId: employer3.id } })
+
+  // Fetch student profiles for existing users
+  const student1Profile = await prisma.studentProfile.findUnique({ where: { userId: student1.id } })
+  const student2Profile = await prisma.studentProfile.findUnique({ where: { userId: student2.id } })
 
   // ============================================================================
   // MENTOR USERS
@@ -298,9 +307,9 @@ async function main() {
 
   const whoInternship = await prisma.internship.create({
     data: {
-      employerId: employer1.employerProfile!.id,
+      employerId: employer1Profile.id,
       title: 'Global Health Intern - Infectious Diseases',
-      description: 'Join WHO's Infectious Diseases team to support outbreak response and surveillance activities. Work alongside leading epidemiologists on real-world public health challenges.',
+      description: 'Join WHO\'s Infectious Diseases team to support outbreak response and surveillance activities. Work alongside leading epidemiologists on real-world public health challenges.',
       requirements: [
         'Currently enrolled in Public Health, Epidemiology, or related field',
         'Strong analytical and research skills',
@@ -338,9 +347,9 @@ async function main() {
 
   const unicefInternship = await prisma.internship.create({
     data: {
-      employerId: employer2.employerProfile!.id,
+      employerId: employer2Profile.id,
       title: 'Child Health Research Intern',
-      description: 'Support UNICEF's child health research initiatives focusing on nutrition, immunization, and disease prevention in low-resource settings.',
+      description: 'Support UNICEF\'s child health research initiatives focusing on nutrition, immunization, and disease prevention in low-resource settings.',
       requirements: [
         'Graduate student in Public Health, Nutrition, or related field',
         'Experience with systematic reviews and meta-analysis',
@@ -378,9 +387,9 @@ async function main() {
 
   const gatesInternship = await prisma.internship.create({
     data: {
-      employerId: employer3.employerProfile!.id,
+      employerId: employer3Profile.id,
       title: 'Global Health Data Science Intern',
-      description: 'Join the Gates Foundation's Data Science team to develop predictive models and analytics for global health programs. Focus on malaria, TB, and neglected tropical diseases.',
+      description: 'Join the Gates Foundation\'s Data Science team to develop predictive models and analytics for global health programs. Focus on malaria, TB, and neglected tropical diseases.',
       requirements: [
         'Graduate student in Data Science, Biostatistics, or related field',
         'Proficiency in Python and R',
@@ -424,10 +433,10 @@ async function main() {
   await prisma.application.create({
     data: {
       internshipId: whoInternship.id,
-      studentId: student1.studentProfile!.id,
+      studentId: student1Profile.id,
       userId: student1.id,
       status: 'SUBMITTED',
-      coverLetter: 'I am passionate about infectious disease surveillance and would be honored to contribute to WHO's mission...',
+      coverLetter: 'I am passionate about infectious disease surveillance and would be honored to contribute to WHO\'s mission...',
       submissionData: {
         screeningQuestions: {
           availableForTravel: true,
@@ -441,10 +450,10 @@ async function main() {
   await prisma.application.create({
     data: {
       internshipId: unicefInternship.id,
-      studentId: student2.studentProfile!.id,
+      studentId: student2Profile.id,
       userId: student2.id,
       status: 'UNDER_REVIEW',
-      coverLetter: 'My research on vector-borne diseases aligns perfectly with UNICEF's child health priorities...',
+      coverLetter: 'My research on vector-borne diseases aligns perfectly with UNICEF\'s child health priorities...',
       submissionData: {
         screeningQuestions: {
           availableForTravel: true,

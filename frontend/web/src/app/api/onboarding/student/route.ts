@@ -9,15 +9,22 @@ import { authOptions } from '@/lib/auth/options'
  */
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
-    
-    if (!session?.user?.email) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    // Try cookie-based auth first, fall back to next-auth
+    let userId = request.cookies.get('user_id')?.value
+    let userEmail = ''
+
+    if (!userId) {
+      const session = await getServerSession(authOptions)
+      userEmail = session?.user?.email || ''
+      if (!userEmail) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      }
+      const dbUser = await prisma.user.findUnique({ where: { email: userEmail } })
+      if (!dbUser) return NextResponse.json({ error: 'User not found' }, { status: 404 })
+      userId = dbUser.id
     }
 
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
-    })
+    const user = await prisma.user.findUnique({ where: { id: userId } })
 
     if (!user) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
@@ -178,16 +185,22 @@ export async function POST(request: NextRequest) {
  * GET /api/onboarding/student
  * Get current user's student profile
  */
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
-    
-    if (!session?.user?.email) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    let userId = request.cookies.get('user_id')?.value
+
+    if (!userId) {
+      const session = await getServerSession(authOptions)
+      if (!session?.user?.email) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      }
+      const dbUser = await prisma.user.findUnique({ where: { email: session.user.email } })
+      if (!dbUser) return NextResponse.json({ error: 'User not found' }, { status: 404 })
+      userId = dbUser.id
     }
 
     const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
+      where: { id: userId },
       include: {
         studentProfile: {
           include: {

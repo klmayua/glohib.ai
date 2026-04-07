@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-
-const IDENTITY_SERVICE_URL = process.env.IDENTITY_SERVICE_URL || 'http://localhost:8080'
+import { prisma } from '@/lib/db'
+import bcrypt from 'bcryptjs'
 
 /**
  * POST /api/auth/register
- * Register a new user with email/password via Identity Service
+ * Register a new user with email/password directly via Prisma
  */
 export async function POST(request: NextRequest) {
   try {
@@ -18,7 +18,6 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Validate password strength
     if (password.length < 8) {
       return NextResponse.json(
         { error: 'Password must be at least 8 characters long' },
@@ -26,65 +25,44 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Call identity service to register user
-    const response = await fetch(`${IDENTITY_SERVICE_URL}/api/v1/auth/register`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password, role: role.toLowerCase() }),
+    // Check if user already exists
+    const existingUser = await prisma.user.findUnique({
+      where: { email: email.toLowerCase() },
     })
 
-    if (!response.ok) {
-      const error = await response.json()
-      if (error.error?.includes('user exists') || error.error?.includes('already')) {
-        return NextResponse.json(
-          { error: 'An account with this email already exists' },
-          { status: 409 }
-        )
-      }
+    if (existingUser) {
       return NextResponse.json(
-        { error: error.error || 'Registration failed' },
-        { status: response.status }
+        { error: 'An account with this email already exists' },
+        { status: 409 }
       )
     }
 
-    const data = await response.json()
-    
-    // Fetch user data from identity service
-    const meResponse = await fetch(`${IDENTITY_SERVICE_URL}/api/v1/auth/me`, {
-      headers: {
-        'Authorization': `Bearer ${data.tokens.access_token}`,
+    const hashedPassword = await bcrypt.hash(password, 12)
+
+    const user = await prisma.user.create({
+      data: {
+        email: email.toLowerCase(),
+        name: name || email.split('@')[0],
+        password: hashedPassword,
+        role: role.toUpperCase(),
+        status: 'ACTIVE',
+        emailVerified: new Date(),
+      },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        role: true,
+        status: true,
+        createdAt: true,
       },
     })
-    
-    const userData = await meResponse.json()
-    
-    // Set cookies with tokens
-    const nextResponse = NextResponse.json({
+
+    return NextResponse.json({
       success: true,
-      message: 'Registration successful. Please log in.',
-      user: userData,
-      tokens: data.tokens
+      message: 'Registration successful',
+      user,
     })
-
-    // Set access token cookie
-    nextResponse.cookies.set('access_token', data.tokens.access_token, {
-      httpOnly: true,
-      secure: false,  // Disabled for HTTP - enable for HTTPS
-      sameSite: 'lax',
-      maxAge: 60 * 15, // 15 minutes
-      path: '/',
-    })
-
-    // Set refresh token cookie
-    nextResponse.cookies.set('refresh_token', data.tokens.refresh_token, {
-      httpOnly: true,
-      secure: false,  // Disabled for HTTP - enable for HTTPS
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 7, // 7 days
-      path: '/',
-    })
-
-    return nextResponse
   } catch (error) {
     console.error('Registration error:', error)
     return NextResponse.json(

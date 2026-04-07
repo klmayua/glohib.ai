@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { PrismaClient } from '@prisma/client'
+import bcrypt from 'bcryptjs'
 
-const IDENTITY_SERVICE_URL = process.env.IDENTITY_SERVICE_URL || 'http://localhost:8080'
+const prisma = new PrismaClient()
 
 /**
  * POST /api/auth/login
- * Login with email/password via Identity Service
+ * Login with email/password using direct database authentication
  */
 export async function POST(request: NextRequest) {
   try {
@@ -18,65 +20,86 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Call identity service
-    const response = await fetch(`${IDENTITY_SERVICE_URL}/api/v1/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
+    // Find user in database
+    const user = await prisma.user.findUnique({
+      where: { email: email.toLowerCase() },
+      include: {
+        studentProfile: true,
+        employerProfile: true,
+        mentorProfile: true,
+      },
     })
 
-    if (!response.ok) {
-      const error = await response.json()
+    console.log('Login attempt for:', email, 'User found:', !!user, 'Has password:', !!user?.password)
+
+    if (!user || !user.password) {
+      console.log('No user or no password found')
       return NextResponse.json(
-        { error: error.error || 'Invalid credentials' },
-        { status: response.status }
+        { error: 'Invalid credentials' },
+        { status: 401 }
       )
     }
 
-    const data = await response.json()
+    // Verify password
+    const isValidPassword = await bcrypt.compare(password, user.password!)
+    console.log('Password valid:', isValidPassword)
+
+    if (!isValidPassword) {
+      return NextResponse.json(
+        { error: 'Invalid credentials' },
+        { status: 401 }
+      )
+    }
+
+    // Check if user is active
+    if (user.status !== 'ACTIVE') {
+      return NextResponse.json(
+        { error: 'Account is inactive. Please contact support.' },
+        { status: 403 }
+      )
+    }
+
+    // Prepare user data (exclude sensitive fields)
+    const { password: _, ...userWithoutPassword } = user
     
-    // Fetch user data from identity service
-    const meResponse = await fetch(`${IDENTITY_SERVICE_URL}/api/v1/auth/me`, {
-      headers: {
-        'Authorization': `Bearer ${data.tokens.access_token}`,
-      },
-    })
-    
-    const userData = await meResponse.json()
-    
-    // Set cookies with tokens
+    // Create a simple session token (in production, use JWT)
+    const sessionToken = Buffer.from(`${user.id}:${Date.now()}`).toString('base64')
+
+    // Set session cookie
     const nextResponse = NextResponse.json({
       success: true,
       message: 'Login successful',
       redirect: callbackUrl || '/dashboard',
-      user: userData,
-      tokens: data.tokens
+      user: userWithoutPassword,
     })
 
-    // Set access token cookie
-    nextResponse.cookies.set('access_token', data.tokens.access_token, {
+    // Set session cookie
+    nextResponse.cookies.set('session_token', sessionToken, {
       httpOnly: true,
-      secure: false,  // Disabled for HTTP - enable for HTTPS
+      secure: false,  // Disabled for testing
       sameSite: 'lax',
-      maxAge: 60 * 15, // 15 minutes
+      maxAge: 60 * 60 * 24 * 7, // 7 days
       path: '/',
     })
 
-    // Set refresh token cookie
-    nextResponse.cookies.set('refresh_token', data.tokens.refresh_token, {
-      httpOnly: true,
-      secure: false,  // Disabled for HTTP - enable for HTTPS
+    // Set user ID cookie for client-side access
+    nextResponse.cookies.set('user_id', user.id, {
+      httpOnly: false,
+      secure: false,  // Disabled for testing
       sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 7, // 7 days
+      maxAge: 60 * 60 * 24 * 7,
       path: '/',
     })
 
     return nextResponse
   } catch (error) {
     console.error('Login error:', error)
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
     return NextResponse.json(
-      { error: 'Login failed. Please try again.' },
+      { error: 'Login failed: ' + errorMessage },
       { status: 500 }
     )
+  } finally {
+    await prisma.$disconnect()
   }
 }

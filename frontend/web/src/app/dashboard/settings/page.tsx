@@ -1,8 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Bell, Shield, User, Eye, Trash2 } from 'lucide-react'
+import { Bell, Shield, User, Eye, Trash2, Save, CheckCircle } from 'lucide-react'
 import { Card, Button } from '@/components/ui'
 import { useLogout } from '@/hooks/use-auth'
 import { useAuthStore } from '@/lib/auth-store'
@@ -11,6 +11,12 @@ export default function SettingsPage() {
   const router = useRouter()
   const logoutMutation = useLogout()
   const user = useAuthStore((state) => state.user)
+
+  const [settings, setSettings] = useState({
+    email: user?.email || '',
+    role: user?.role || '',
+    profileCompleteness: 0,
+  })
 
   const [notifications, setNotifications] = useState({
     emailApplications: true,
@@ -24,6 +30,43 @@ export default function SettingsPage() {
     showEmail: false,
   })
 
+  const [isSaving, setIsSaving] = useState(false)
+  const [saveSuccess, setSaveSuccess] = useState(false)
+
+  useEffect(() => {
+    fetchSettings()
+  }, [])
+
+  const fetchSettings = async () => {
+    try {
+      const res = await fetch('/api/settings', { credentials: 'include' })
+      if (res.ok) {
+        const data = await res.json()
+        setSettings(data.settings)
+      }
+    } catch (err) {
+      console.error('Error fetching settings:', err)
+    }
+  }
+
+  const handleSave = async () => {
+    setIsSaving(true)
+    try {
+      await fetch('/api/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ notifications, privacy }),
+      })
+      setSaveSuccess(true)
+      setTimeout(() => setSaveSuccess(false), 2000)
+    } catch (err) {
+      console.error('Error saving settings:', err)
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
   const toggleNotification = (key: keyof typeof notifications) => {
     setNotifications(prev => ({ ...prev, [key]: !prev[key] }))
   }
@@ -35,9 +78,14 @@ export default function SettingsPage() {
   return (
     <div className="space-y-6 max-w-3xl">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-semibold text-white">Settings</h1>
-        <p className="text-slate-400 text-sm mt-1">Manage your account preferences</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold text-white">Settings</h1>
+          <p className="text-slate-400 text-sm mt-1">Manage your account preferences</p>
+        </div>
+        <Button onClick={handleSave} disabled={isSaving}>
+          {isSaving ? 'Saving...' : saveSuccess ? (<><CheckCircle className="w-4 h-4 mr-2" /> Saved</>) : (<><Save className="w-4 h-4 mr-2" /> Save All</>)}
+        </Button>
       </div>
 
       {/* Account */}
@@ -50,17 +98,20 @@ export default function SettingsPage() {
           <div className="flex items-center justify-between py-3 border-b border-white/[0.08]">
             <div>
               <p className="text-sm text-white">Email</p>
-              <p className="text-xs text-slate-400">{user?.email || 'Not set'}</p>
+              <p className="text-xs text-slate-400">{settings.email}</p>
             </div>
           </div>
           <div className="flex items-center justify-between py-3 border-b border-white/[0.08]">
             <div>
-              <p className="text-sm text-white">Password</p>
-              <p className="text-xs text-slate-400">Last changed: Unknown</p>
+              <p className="text-sm text-white">Role</p>
+              <p className="text-xs text-slate-400">{settings.role}</p>
             </div>
-            <Button variant="secondary" size="sm" onClick={() => router.push('/forgot-password')}>
-              Change
-            </Button>
+          </div>
+          <div className="flex items-center justify-between py-3 border-b border-white/[0.08]">
+            <div>
+              <p className="text-sm text-white">Profile Completeness</p>
+              <p className="text-xs text-slate-400">{settings.profileCompleteness}%</p>
+            </div>
           </div>
           <div className="flex items-center justify-between py-3">
             <div>
@@ -150,23 +201,8 @@ export default function SettingsPage() {
               <p className="text-sm text-white">Sign out</p>
               <p className="text-xs text-slate-400">Sign out of your account on this device</p>
             </div>
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => logoutMutation.mutate()}
-              disabled={logoutMutation.isPending}
-            >
+            <Button variant="secondary" size="sm" onClick={() => logoutMutation.mutate()} disabled={logoutMutation.isPending}>
               {logoutMutation.isPending ? 'Signing out...' : 'Sign Out'}
-            </Button>
-          </div>
-          <div className="flex items-center justify-between py-3">
-            <div>
-              <p className="text-sm text-red-400">Delete account</p>
-              <p className="text-xs text-slate-400">Permanently delete your account and all data</p>
-            </div>
-            <Button variant="danger" size="sm">
-              <Trash2 className="w-3.5 h-3.5 mr-1.5" />
-              Delete
             </Button>
           </div>
         </div>

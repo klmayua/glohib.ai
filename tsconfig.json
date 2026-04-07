@@ -19,8 +19,15 @@
     "incremental": true,
     "baseUrl": ".",
     "paths": {
-      "@glohib/*": ["services/*/src/*"],
-      "@frontend/*": ["frontend/*/src/*"]
+      "@glohib/identity": ["services/identity-service/src"],
+      "@glohib/student": ["services/student-service/src"],
+      "@glohib/internship": ["services/internship-service/src"],
+      "@glohib/assessment": ["services/assessment-service/src"],
+      "@glohib/recommendation": ["services/recommendation-service/src"],
+      "@glohib/scoring": ["services/scoring-service/src"],
+      "@glohib/video": ["services/video-service/src"],
+      "@frontend/web": ["frontend/web/src"],
+      "@frontend/web/*": ["frontend/web/src/*"]
     }
   },
   "include": [],

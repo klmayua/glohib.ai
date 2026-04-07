@@ -1,11 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useLogin } from '@/hooks/use-auth'
 import { signIn } from 'next-auth/react'
-import { Sparkles, Mail, Lock, ArrowRight, Github, Chrome } from 'lucide-react'
+import { Sparkles, Mail, Lock, ArrowRight, Github, Chrome, CheckCircle } from 'lucide-react'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -15,6 +15,17 @@ export default function LoginPage() {
     password: '',
   })
   const [error, setError] = useState('')
+  const [successMsg, setSuccessMsg] = useState('')
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const registered = params.get('registered')
+    const email = params.get('email')
+    if (registered === 'true') {
+      setSuccessMsg(`Account created successfully! Sign in with ${email || 'your email'}.`)
+      if (email) setFormData(prev => ({ ...prev, email }))
+    }
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -88,6 +99,13 @@ export default function LoginPage() {
               <span className="px-2 bg-slate-900/50 text-slate-500">Or continue with</span>
             </div>
           </div>
+
+          {successMsg && (
+            <div className="bg-green-500/10 border border-green-500/20 text-green-400 p-4 rounded-sm mb-6 text-sm anim-fade-in-up flex items-center gap-2">
+              <CheckCircle className="w-4 h-4" />
+              {successMsg}
+            </div>
+          )}
 
           {error && (
             <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-sm mb-6 text-sm anim-fade-in-up">

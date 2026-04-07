@@ -7,121 +7,49 @@ import { prisma } from '@/lib/db'
  */
 export async function GET(request: NextRequest) {
   try {
-    // Get user from cookie-based auth
-    const authCookie = request.cookies.get('access_token')?.value
-    
-    if (!authCookie) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    // Fetch user info from identity service
-    const userResponse = await fetch('http://localhost:8080/api/v1/auth/me', {
-      headers: {
-        'Authorization': `Bearer ${authCookie}`,
-      },
-    })
-    
-    if (!userResponse.ok) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-    
-    const user = await userResponse.json()
-
-    if (!user?.email) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 })
-    }
-
-    // Find user in database by email
-    const dbUser = await prisma.user.findUnique({
-      where: { email: user.email },
-    })
-
-    if (!dbUser) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 })
-    }
+    const userId = request.cookies.get('user_id')?.value
+    if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const notifications = await prisma.notification.findMany({
-      where: { userId: dbUser.id },
+      where: { userId },
       orderBy: { createdAt: 'desc' },
-      take: 50,
+      take: 20,
     })
 
-    const unreadCount = await prisma.notification.count({
-      where: { userId: dbUser.id, isRead: false },
-    })
-
-    return NextResponse.json({ notifications, unreadCount })
+    return NextResponse.json({ notifications })
   } catch (error) {
-    console.error('Error fetching notifications:', error)
+    console.error('Notifications error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
 
 /**
- * PUT /api/notifications
- * Mark notifications as read
+ * POST /api/notifications/read
+ * Mark notification as read
  */
-export async function PUT(request: NextRequest) {
+export async function POST(request: NextRequest) {
   try {
-    // Get user from cookie-based auth
-    const authCookie = request.cookies.get('access_token')?.value
-
-    if (!authCookie) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    // Fetch user info from identity service
-    const userResponse = await fetch('http://localhost:8080/api/v1/auth/me', {
-      headers: {
-        'Authorization': `Bearer ${authCookie}`,
-      },
-    })
-
-    if (!userResponse.ok) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    const user = await userResponse.json()
-
-    if (!user?.email) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 })
-    }
-
-    const dbUser = await prisma.user.findUnique({
-      where: { email: user.email },
-    })
-
-    if (!dbUser) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 })
-    }
+    const userId = request.cookies.get('user_id')?.value
+    if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const body = await request.json()
-    const { notificationIds, markAllRead } = body
+    const { notificationId } = body
 
-    if (markAllRead) {
+    if (notificationId) {
       await prisma.notification.updateMany({
-        where: { userId: dbUser.id, isRead: false },
-        data: {
-          isRead: true,
-          readAt: new Date(),
-        },
+        where: { id: notificationId, userId },
+        data: { isRead: true, readAt: new Date() },
       })
-    } else if (notificationIds && Array.isArray(notificationIds)) {
+    } else {
       await prisma.notification.updateMany({
-        where: {
-          id: { in: notificationIds },
-          userId: dbUser.id,
-        },
-        data: {
-          isRead: true,
-          readAt: new Date(),
-        },
+        where: { userId, isRead: false },
+        data: { isRead: true, readAt: new Date() },
       })
     }
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('Error updating notifications:', error)
+    console.error('Mark read error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

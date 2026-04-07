@@ -3,51 +3,28 @@ import { prisma } from '@/lib/db'
 
 /**
  * GET /api/applications
- * Get user's applications
+ * Get user's applications using cookie-based auth
  */
 export async function GET(request: NextRequest) {
   try {
-    // Get user from cookie-based auth
-    const authCookie = request.cookies.get('access_token')?.value
-    
-    if (!authCookie) {
+    const userId = request.cookies.get('user_id')?.value
+
+    if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Fetch user info from identity service
-    const userResponse = await fetch('http://localhost:8080/api/v1/auth/me', {
-      headers: {
-        'Authorization': `Bearer ${authCookie}`,
-      },
-    })
-    
-    if (!userResponse.ok) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-    
-    const user = await userResponse.json()
-
-    if (!user?.email) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 })
-    }
-
-    // Find user in database by email
-    const dbUser = await prisma.user.findUnique({
-      where: { email: user.email },
-      include: { studentProfile: true },
-    })
-
-    if (!dbUser) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 })
-    }
-
-    // Get applications
     const applications = await prisma.application.findMany({
-      where: { userId: dbUser.id },
+      where: { userId },
       include: {
         internship: {
           include: {
-            employer: true,
+            employer: {
+              include: {
+                user: {
+                  select: { name: true, email: true },
+                },
+              },
+            },
           },
         },
       },
@@ -67,36 +44,22 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
-    // Get user from cookie-based auth
-    const authCookie = request.cookies.get('access_token')?.value
-    
-    if (!authCookie) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    const userId = request.cookies.get('user_id')?.value
 
-    // Fetch user info from identity service
-    const userResponse = await fetch('http://localhost:8080/api/v1/auth/me', {
-      headers: {
-        'Authorization': `Bearer ${authCookie}`,
-      },
-    })
-    
-    if (!userResponse.ok) {
+    if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-    
-    const user = await userResponse.json()
-
-    if (!user?.email) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 
     const dbUser = await prisma.user.findUnique({
-      where: { email: user.email },
+      where: { id: userId },
       include: { studentProfile: true },
     })
 
-    if (!dbUser?.studentProfile) {
+    if (!dbUser) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 })
+    }
+
+    if (!dbUser.studentProfile) {
       return NextResponse.json({ error: 'Student profile required' }, { status: 403 })
     }
 
@@ -107,7 +70,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Internship ID is required' }, { status: 400 })
     }
 
-    // Check if internship exists
     const internship = await prisma.internship.findUnique({
       where: { id: internshipId },
     })
@@ -116,19 +78,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Internship not found' }, { status: 404 })
     }
 
-    // Check if already applied
     const existingApplication = await prisma.application.findFirst({
-      where: {
-        internshipId,
-        userId: dbUser.id,
-      },
+      where: { internshipId, userId },
     })
 
     if (existingApplication) {
-      return NextResponse.json({ error: 'You have already applied to this internship' }, { status: 400 })
+      return NextResponse.json({ error: 'Already applied' }, { status: 400 })
     }
 
-    // Create application
     const application = await prisma.application.create({
       data: {
         internshipId,
@@ -150,13 +107,11 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    // Update internship applications count
     await prisma.internship.update({
       where: { id: internshipId },
       data: { applicationsCount: internship.applicationsCount + 1 },
     })
 
-    // Create notification for student
     await prisma.notification.create({
       data: {
         userId: dbUser.id,

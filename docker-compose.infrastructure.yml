@@ -5,9 +5,9 @@
 
 x-common-variables: &common-variables
   POSTGRES_USER: glohib
-  POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-GlohibAI_DB_Secure_2026!}
+  POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-p9G60lDuECW5gKqiohyBxznpo+cheK+vgQEglgp1dgI=}
   POSTGRES_DB: glohib_db
-  REDIS_PASSWORD: ${REDIS_PASSWORD:-GlohibRedis2026!}
+  REDIS_PASSWORD: ${REDIS_PASSWORD:-UF5wtib+XBxd8NnGduUaSDy955RdtupkctFU0qTCesM=}
 
 services:
   # ============================================================================
@@ -23,7 +23,7 @@ services:
       - postgres_data:/var/lib/postgresql/data
       - ./docker/init_postgres.sql:/docker-entrypoint-initdb.d/init_postgres.sql:ro
     ports:
-      - "127.0.0.1:5432:5432"  # Localhost only for security
+      - "127.0.0.1:5437:5432"  # PostgreSQL
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U glohib"]
       interval: 10s
@@ -47,7 +47,7 @@ services:
     volumes:
       - redis_data:/data
     ports:
-      - "127.0.0.1:6379:6379"  # Localhost only
+      - "127.0.0.1:6384:6379"  # Changed to avoid conflict
     healthcheck:
       test: ["CMD", "redis-cli", "--pass", "${REDIS_PASSWORD:-GlohibRedis2026!}", "ping"]
       interval: 10s
@@ -73,8 +73,8 @@ services:
     volumes:
       - minio_data:/data
     ports:
-      - "127.0.0.1:9000:9000"      # API
-      - "127.0.0.1:9001:9001"      # Console
+      - "127.0.0.1:9023:9000"      # API - Changed to avoid conflict
+      - "127.0.0.1:9024:9001"      # Console - Changed to avoid conflict
     command: server /data --console-address ":9001"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
@@ -90,8 +90,8 @@ services:
 
 networks:
   glohib-net:
-    external: true
-    name: glohibai_glohib-net
+    driver: bridge
+    name: glohib-net
 
 volumes:
   postgres_data:
